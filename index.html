@@ -169,7 +169,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="pyspark" class="level1">
 <h1>PySpark</h1>
-<p>spark = SparkSession.builder.appName(“MET”).getOrCreate() df = spark.createDataFrame(data) df.show(5)</p>
+<p>spark = SparkSession.builder.appName(“MET”).getOrCreate() df = spark.createDataFrame(data) df.toPandas().head(5)</p>
 
 
 </section>
