@@ -33,4 +33,4 @@ data = response.json()
 # PySpark
 spark = SparkSession.builder.appName("MET").getOrCreate()
 df = spark.createDataFrame(data)
-df.show(5)
+df.toPandas().head(5)
