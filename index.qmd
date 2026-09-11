@@ -10,7 +10,6 @@ To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
 
 ![](./images/sw_bg.jpg){fig-align="center" width="75%"}
 
-
 ## Load Data from MET API and Initailize pyspark DataFrame
 ```{python}
 from dotenv import load_dotenv
@@ -18,19 +17,17 @@ import os
 import requests
 from pyspark.sql import SparkSession
 
-# Load API key
 load_dotenv()
 api_key = os.getenv("MET_API_KEY")
 
-# Call API
 response = requests.get(
     "https://met-employability-services.azurewebsites.net/api/data/",
     headers={"Authorization": f"Bearer {api_key}"}
 )
-print(response.status_code)
+
 data = response.json()
 
-# PySpark
 spark = SparkSession.builder.appName("MET").getOrCreate()
 df = spark.createDataFrame(data)
 df.toPandas().head(5)
+```
