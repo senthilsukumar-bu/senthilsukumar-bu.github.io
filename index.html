@@ -114,8 +114,17 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#load-data-from-met-api-and-initailize-pyspark-dataframe" id="toc-load-data-from-met-api-and-initailize-pyspark-dataframe" class="nav-link active" data-scroll-target="#load-data-from-met-api-and-initailize-pyspark-dataframe">Load Data from MET API and Initailize pyspark DataFrame</a></li>
+  <li><a href="#load-api-key" id="toc-load-api-key" class="nav-link" data-scroll-target="#load-api-key">Load API key</a></li>
+  <li><a href="#call-api" id="toc-call-api" class="nav-link" data-scroll-target="#call-api">Call API</a></li>
+  <li><a href="#pyspark" id="toc-pyspark" class="nav-link" data-scroll-target="#pyspark">PySpark</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -146,8 +155,24 @@ ul.task-list li input[type="checkbox"] {
 <p><img src="./images/sw_bg.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:75.0%"></p>
 </figure>
 </div>
+<section id="load-data-from-met-api-and-initailize-pyspark-dataframe" class="level2">
+<h2 class="anchored" data-anchor-id="load-data-from-met-api-and-initailize-pyspark-dataframe">Load Data from MET API and Initailize pyspark DataFrame</h2>
+<p>from dotenv import load_dotenv import os import requests from pyspark.sql import SparkSession</p>
+</section>
+<section id="load-api-key" class="level1">
+<h1>Load API key</h1>
+<p>load_dotenv() api_key = os.getenv(“MET_API_KEY”)</p>
+</section>
+<section id="call-api" class="level1">
+<h1>Call API</h1>
+<p>response = requests.get( “https://met-employability-services.azurewebsites.net/api/data/”, headers={“Authorization”: f”Bearer {api_key}“} ) print(response.status_code) data = response.json()</p>
+</section>
+<section id="pyspark" class="level1">
+<h1>PySpark</h1>
+<p>spark = SparkSession.builder.appName(“MET”).getOrCreate() df = spark.createDataFrame(data) df.show(5)</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

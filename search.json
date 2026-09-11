@@ -12,5 +12,12 @@
     "title": "Senthil Sukumar",
     "section": "",
     "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites."
+  },
+  {
+    "objectID": "index.html#load-data-from-met-api-and-initailize-pyspark-dataframe",
+    "href": "index.html#load-data-from-met-api-and-initailize-pyspark-dataframe",
+    "title": "Senthil Sukumar",
+    "section": "Load Data from MET API and Initailize pyspark DataFrame",
+    "text": "Load Data from MET API and Initailize pyspark DataFrame\nfrom dotenv import load_dotenv import os import requests from pyspark.sql import SparkSession"
   }
 ]
