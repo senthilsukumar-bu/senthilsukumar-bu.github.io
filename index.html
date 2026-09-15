@@ -193,7 +193,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe">Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame</h2>
-<div id="6c923558" class="cell" data-execution_count="1">
+<div id="37da54c4" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
@@ -220,19 +220,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> spark.createDataFrame(pdf)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>df.toPandas().head(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>26/09/15 10:16:55 WARN SparkSession: Using an existing Spark session; only runtime SQL configurations will take effect.
+<pre><code>26/09/15 10:19:01 WARN SparkSession: Using an existing Spark session; only runtime SQL configurations will take effect.
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:659: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
-  require_minimum_pandas_version()
-
-[Stage 2:&gt;                                                          (0 + 2) / 2]
-
-[Stage 2:=============================&gt;                             (1 + 1) / 2]
-
-                                                                                </code></pre>
+  require_minimum_pandas_version()</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="5">
 <div>
 
 
@@ -394,7 +388,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="assignment-2---load-data-into-spark-create-tables-and-queries" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-2---load-data-into-spark-create-tables-and-queries">Assignment 2 - Load data into Spark, Create Tables and Queries</h2>
-<div id="fdce8937" class="cell" data-execution_count="2">
+<div id="5fd7c80e" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -438,12 +432,54 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="co"># comment the lines below when rendering the submission</span></span>
 <span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="co"># df.printSchema()</span></span>
 <span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="co"># df.show(5)</span></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span> (<span class="st">"test"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="co"># print ("test")</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="co">### Create Tables</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql.functions <span class="im">import</span> col, monotonically_increasing_id</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>industries_df <span class="op">=</span> df.select(</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    col(<span class="st">"naics_2022_6"</span>),</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    col(<span class="st">"naics_2022_6_name"</span>),</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    col(<span class="st">"soc_5"</span>).alias(<span class="st">"soc_code"</span>),</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    col(<span class="st">"soc_5_name"</span>).alias(<span class="st">"soc_name"</span>),</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    col(<span class="st">"onet_name"</span>).alias(<span class="st">"specialized_occupation"</span>),</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>    col(<span class="st">"soc_2_name"</span>).alias(<span class="st">"occupation_group"</span>)</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>).distinct().withColumn(<span class="st">"industry_id"</span>, monotonically_increasing_id())</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Rearrange columns to have industry_id first</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>industries_df <span class="op">=</span> industries_df.select(</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="st">"industry_id"</span>,</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>    <span class="st">"naics_2022_6"</span>,</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>    <span class="st">"naics_2022_6_name"</span>,</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    <span class="st">"soc_code"</span>,</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="st">"soc_name"</span>,</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    <span class="st">"specialized_occupation"</span>,</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    <span class="st">"occupation_group"</span></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>industries_df.show(<span class="dv">5</span>, truncate<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>26/09/15 10:16:56 WARN SparkSession: Using an existing Spark session; only runtime SQL configurations will take effect.</code></pre>
+<pre><code>26/09/15 10:19:02 WARN SparkSession: Using an existing Spark session; only runtime SQL configurations will take effect.
+
+[Stage 6:&gt;                                                          (0 + 2) / 2]
+
+[Stage 6:=============================&gt;                             (1 + 1) / 2]</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>test</code></pre>
+<pre><code>+-----------+------------+---------------------------------------------------------------------------------------+--------+-------------------+----------------------+---------------------------------------------+
+|industry_id|naics_2022_6|naics_2022_6_name                                                                      |soc_code|soc_name           |specialized_occupation|occupation_group                             |
++-----------+------------+---------------------------------------------------------------------------------------+--------+-------------------+----------------------+---------------------------------------------+
+|0          |221112      |Fossil Fuel Electric Power Generation                                                  |13-1111 |Management Analysts|Management Analysts   |Business and Financial Operations Occupations|
+|1          |541710      |Research and Development in the Physical, Engineering, and Life Sciences               |11-2022 |Sales Managers     |Sales Managers        |Management Occupations                       |
+|2          |518000      |Computing Infrastructure Providers, Data Processing, Web Hosting, and Related Services |13-1111 |Management Analysts|Management Analysts   |Business and Financial Operations Occupations|
+|3          |237130      |Power and Communication Line and Related Structures Construction                       |15-1252 |Software Developers|Software Developers   |Computer and Mathematical Occupations        |
+|4          |523000      |Securities, Commodity Contracts, and Other Financial Investments and Related Activities|11-2022 |Sales Managers     |Sales Managers        |Management Occupations                       |
++-----------+------------+---------------------------------------------------------------------------------------+--------+-------------------+----------------------+---------------------------------------------+
+only showing top 5 rows</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+                                                                                </code></pre>
 </div>
 </div>
 
