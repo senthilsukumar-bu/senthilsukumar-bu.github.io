@@ -192,7 +192,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="load-data-from-met-api-and-initailize-pyspark-dataframe" class="level2">
 <h2 class="anchored" data-anchor-id="load-data-from-met-api-and-initailize-pyspark-dataframe">Load Data from MET API and Initailize pyspark DataFrame</h2>
-<div id="71d4aef5" class="cell" data-execution_count="1">
+<div id="cd156bbc" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
@@ -219,7 +219,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> spark.createDataFrame(pdf)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>df.toPandas().head(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:659: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+<pre><code>WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+26/09/15 10:00:24 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:659: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:936: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
@@ -233,14 +241,13 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
   [PACKAGE_NOT_INSTALLED] PyArrow &gt;= 18.0.0 must be installed; however, it was not found.
 Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabled' is set to true.
   warn(msg)
+26/09/15 10:00:34 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
 
-[Stage 1:&gt;                                                          (0 + 2) / 2]
-
-[Stage 1:=============================&gt;                             (1 + 1) / 2]
+[Stage 0:&gt;                                                          (0 + 2) / 2]
 
                                                                                 </code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="2">
+<div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
 
@@ -298,16 +305,16 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>787600</td>
-<td>2026-09-03T02:46:05+00:00</td>
+<td>494040</td>
+<td>2026-09-10T22:54:13.022000+00:00</td>
 <td>NaN</td>
-<td>Senior Power Electronics Test &amp; Validation Eng...</td>
-<td>Senior Power Electronics Test &amp; Validation Eng...</td>
-<td>Heron Power</td>
+<td>Account Executive, Enterprise - Northeast</td>
+<td>Account Executive, Enterprise - Northeast</td>
+<td>1Password</td>
 <td>NaN</td>
-<td>False</td>
-<td>0.0</td>
-<td>['no staffing agency signal detected']</td>
+<td>True</td>
+<td>0.68</td>
+<td>['posting text: talent acquisition partner']</td>
 <td>...</td>
 <td></td>
 <td>[]</td>
@@ -316,18 +323,18 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 <td></td>
 <td>{'area_name': '', 'employment': None, 'annual_...</td>
 <td>{'state_code': '', 'state_name': '', 'median_h...</td>
-<td>{'work_type': '', 'visa_sponsorship': 'Unknown...</td>
-<td></td>
-<td>https://jobs.ashbyhq.com/heron-power/42b32493-...</td>
+<td>{'work_type': '', 'visa_sponsorship': 'Sponsor...</td>
+<td>***1Password is growing.** We’ve surpassed $40...</td>
+<td>https://jobs.ashbyhq.com/1password/9854ad4c-61...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>787601</td>
-<td>2026-09-03T02:43:40+00:00</td>
+<td>787827</td>
+<td>2026-09-10T21:13:45+00:00</td>
 <td>NaN</td>
-<td>Post Production Supervisor</td>
-<td>Post Production Supervisor</td>
-<td>Advanced Systems Group LLC</td>
+<td>Director, Channel Partnerships</td>
+<td>Director, Channel Partnerships</td>
+<td>Everlaw</td>
 <td>NaN</td>
 <td>False</td>
 <td>0.0</td>
@@ -340,18 +347,18 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 <td></td>
 <td>{'area_name': '', 'employment': None, 'annual_...</td>
 <td>{'state_code': '', 'state_name': '', 'median_h...</td>
-<td>{'work_type': '', 'visa_sponsorship': 'Unknown...</td>
-<td></td>
-<td>https://jobs.ashbyhq.com/advanced-systems-grou...</td>
+<td>{'work_type': 'Full Time', 'visa_sponsorship':...</td>
+<td>### **The Role** You'll lead and scale the Par...</td>
+<td>https://job-boards.greenhouse.io/everlaw/jobs/...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>787602</td>
-<td>2026-09-03T02:29:17+00:00</td>
+<td>787828</td>
+<td>2026-09-10T21:13:43+00:00</td>
 <td>NaN</td>
-<td>Client Liaison</td>
-<td>Client Liaison</td>
-<td>Sotheby's</td>
+<td>Director, Channel Partnerships</td>
+<td>Director, Channel Partnerships</td>
+<td>Everlaw</td>
 <td>NaN</td>
 <td>False</td>
 <td>0.0</td>
@@ -364,18 +371,18 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 <td></td>
 <td>{'area_name': '', 'employment': None, 'annual_...</td>
 <td>{'state_code': '', 'state_name': '', 'median_h...</td>
-<td>{'work_type': '', 'visa_sponsorship': 'Unknown...</td>
-<td></td>
-<td>https://job-boards.greenhouse.io/sothebys/jobs...</td>
+<td>{'work_type': 'Full Time', 'visa_sponsorship':...</td>
+<td>### **The Role** You'll lead and scale the Par...</td>
+<td>https://job-boards.greenhouse.io/everlaw/jobs/...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>787603</td>
-<td>2026-09-03T02:26:12+00:00</td>
+<td>787829</td>
+<td>2026-09-10T20:52:41+00:00</td>
 <td>NaN</td>
-<td>Senior Manufacturing Engineer I - Avionics &amp; Test</td>
-<td>Senior Manufacturing Engineer I - Avionics &amp; Test</td>
-<td>Rocket Lab</td>
+<td>Enterprise Account Executive (State, Local, an...</td>
+<td>Enterprise Account Executive</td>
+<td>Everlaw</td>
 <td>NaN</td>
 <td>False</td>
 <td>0.0</td>
@@ -388,9 +395,9 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 <td></td>
 <td>{'area_name': '', 'employment': None, 'annual_...</td>
 <td>{'state_code': '', 'state_name': '', 'median_h...</td>
-<td>{'work_type': '', 'visa_sponsorship': 'Unknown...</td>
-<td></td>
-<td>https://job-boards.greenhouse.io/rocketlab/job...</td>
+<td>{'work_type': 'Full Time, Contract', 'visa_spo...</td>
+<td>### **The Role** You'll drive net new business...</td>
+<td>https://job-boards.greenhouse.io/everlaw/jobs/...</td>
 </tr>
 </tbody>
 </table>
