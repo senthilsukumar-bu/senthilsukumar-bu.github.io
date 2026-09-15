@@ -193,7 +193,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe">Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame</h2>
-<div id="ba2181d7" class="cell" data-execution_count="1">
+<div id="0e477654" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
@@ -227,7 +227,7 @@ Setting default log level to "WARN".
 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
-26/09/15 12:14:05 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+26/09/15 12:43:47 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:659: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:936: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
@@ -242,7 +242,7 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
   [PACKAGE_NOT_INSTALLED] PyArrow &gt;= 18.0.0 must be installed; however, it was not found.
 Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabled' is set to true.
   warn(msg)
-26/09/15 12:14:13 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+26/09/15 12:43:55 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
 
 [Stage 0:&gt;                                                          (0 + 2) / 2]
 
@@ -410,7 +410,7 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 </section>
 <section id="assignment-2---load-data-into-spark-create-tables-and-queries" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-2---load-data-into-spark-create-tables-and-queries">Assignment 2 - Load data into Spark, Create Tables and Queries</h2>
-<div id="b1657bc9" class="cell" data-execution_count="2">
+<div id="4e2cf085" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -562,20 +562,44 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 <span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>jobpostings_df.show(<span class="dv">5</span>, truncate<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>industries_df.write.mode(<span class="st">"overwrite"</span>).csv(<span class="st">"./output/industries.csv"</span>, header<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>companies_df.write.mode(<span class="st">"overwrite"</span>).csv(<span class="st">"./output/companies.csv"</span>, header<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>locations_df.write.mode(<span class="st">"overwrite"</span>).csv(<span class="st">"./output/locations.csv"</span>, header<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>jobpostings_df.write.mode(<span class="st">"overwrite"</span>).csv(<span class="st">"./output/jobpostings.csv"</span>, header<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a><span class="co">#industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)</span></span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a><span class="co">#companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)</span></span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a><span class="co">#locations_df.write.mode("overwrite").csv("./output/locations.csv", header=True)</span></span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a><span class="co">#jobpostings_df.write.mode("overwrite").csv("./output/jobpostings.csv", header=True)</span></span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a><span class="co"># Test Top 5 Job Titles query</span></span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a>top5_titles <span class="op">=</span> spark.sql(<span class="st">"""</span></span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT </span></span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a><span class="st">        title_clean aS job_title,</span></span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a><span class="st">        COUNT(*) AS posting_count</span></span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM job_postings</span></span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a><span class="st">    GROUP BY title_clean</span></span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a><span class="st">    ORDER BY posting_count DESC</span></span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a><span class="st">    LIMIT 5</span></span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a>top5_titles.toPandas()</span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>top5_pd <span class="op">=</span> top5_titles.toPandas()</span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>top5_pd.columns <span class="op">=</span> [<span class="st">"Job Title"</span>, <span class="st">"Posting Count"</span>]</span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>top5_pd <span class="op">=</span> top5_pd.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>top5_pd.index <span class="op">+=</span> <span class="dv">1</span>  <span class="co"># rank starts at 1</span></span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>top5_pd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>26/09/15 12:14:17 WARN SparkSession: Using an existing Spark session; only runtime SQL configurations will take effect.
+<pre><code>26/09/15 12:43:58 WARN SparkSession: Using an existing Spark session; only runtime SQL configurations will take effect.
 
 [Stage 1:&gt;                                                          (0 + 1) / 1]
 
                                                                                 
 
+[Stage 2:&gt;                                                          (0 + 2) / 2]
+
+[Stage 2:&gt;    (0 + 2) / 2][Stage 3:&gt;    (0 + 0) / 2][Stage 4:&gt;    (0 + 0) / 2]
+
 [Stage 2:==&gt;  (1 + 1) / 2][Stage 3:&gt;    (0 + 1) / 2][Stage 4:&gt;    (0 + 0) / 2]
 
-[Stage 3:=========&gt;         (1 + 1) / 2][Stage 4:&gt;                  (0 + 1) / 2]
+[Stage 2:=====(2 + 0) / 2][Stage 3:==&gt;  (1 + 1) / 2][Stage 4:&gt;    (0 + 1) / 2]
+
+[Stage 4:&gt;                                                          (0 + 2) / 2]
 
 [Stage 4:=============================&gt;                             (1 + 1) / 2]
 
@@ -600,28 +624,53 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
 only showing top 5 rows</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>
-[Stage 32:=============================&gt;                            (1 + 1) / 2]
+<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
 
-[Stage 34:&gt;                                                        (0 + 2) / 11]
 
-[Stage 34:=====&gt;                                                   (1 + 2) / 11]
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Job Title</th>
+<th data-quarto-table-cell-role="th">Posting Count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Retail Sales Associate</td>
+<td>160</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Commercial Driver</td>
+<td>142</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Account Executive - B2B</td>
+<td>106</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">4</th>
+<td>Part Sales Manager</td>
+<td>103</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">5</th>
+<td>Janitorial Maintenance</td>
+<td>56</td>
+</tr>
+</tbody>
+</table>
 
-[Stage 34:==========&gt;                                              (2 + 2) / 11]
-
-[Stage 34:====================&gt;                                    (4 + 2) / 11]
-
-[Stage 34:=========================&gt;                               (5 + 2) / 11]
-
-[Stage 34:===============================&gt;                         (6 + 2) / 11]
-
-[Stage 34:=========================================&gt;               (8 + 2) / 11]
-
-[Stage 34:==================================================&gt;     (10 + 1) / 11]
-
-[Stage 34:========================================================(11 + 0) / 11]
-
-                                                                                </code></pre>
+</div>
 </div>
 </div>
 

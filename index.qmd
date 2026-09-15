@@ -196,12 +196,28 @@ jobpostings_df = jobpostings_df.select(
 )
 
 jobpostings_df.show(5, truncate=False)
-industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)
-companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)
-locations_df.write.mode("overwrite").csv("./output/locations.csv", header=True)
-jobpostings_df.write.mode("overwrite").csv("./output/jobpostings.csv", header=True)
+#industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)
+#companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)
+#locations_df.write.mode("overwrite").csv("./output/locations.csv", header=True)
+#jobpostings_df.write.mode("overwrite").csv("./output/jobpostings.csv", header=True)
 
+# Test Top 5 Job Titles query
+top5_titles = spark.sql("""
+    SELECT 
+        title_clean aS job_title,
+        COUNT(*) AS posting_count
+    FROM job_postings
+    GROUP BY title_clean
+    ORDER BY posting_count DESC
+    LIMIT 5
+""")
 
+top5_titles.toPandas()
+top5_pd = top5_titles.toPandas()
+top5_pd.columns = ["Job Title", "Posting Count"]
+top5_pd = top5_pd.reset_index(drop=True)
+top5_pd.index += 1  # rank starts at 1
+top5_pd
 ```
 
 
