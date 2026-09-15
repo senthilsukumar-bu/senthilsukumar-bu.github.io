@@ -3,7 +3,7 @@ title: "Senthil Sukumar"
 format: html
 jupyter: python3
 execute:
-  freeze: true 
+  freeze: auto 
 ---
 
 This is a Quarto website.
@@ -12,7 +12,7 @@ To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
 
 ![](./images/sw_bg.jpg){fig-align="center" width="75%"}
 
-## Load Data from MET API and Initailize pyspark DataFrame
+## Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame
 ```{python}
 from dotenv import load_dotenv
 import os
@@ -40,3 +40,170 @@ pdf = pd.DataFrame(records).astype(str)
 df = spark.createDataFrame(pdf)
 df.toPandas().head(5)
 ```
+
+
+
+## Assignment 2 - Load data into Spark, Create Tables and Queries
+```{python}
+import os
+import sys
+from pathlib import Path
+from pyspark.sql import SparkSession
+
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
+spark = (
+    SparkSession.builder
+    .appName("JobPostingsAnalysis")
+    .master("local[*]")
+    .config("spark.driver.host", "localhost")
+    .getOrCreate()
+)
+
+spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
+
+# Use sample mode while testing. Set to False for the full dataset.
+USE_SAMPLE = True
+
+data_dir = Path("../data/MET_CareerCompass_2026")
+if not data_dir.exists():
+    data_dir = Path("data/MET_CareerCompass_2026")
+
+parquet_files = sorted(data_dir.glob("*.parquet"))
+
+if USE_SAMPLE:
+    parquet_files = parquet_files[:1]
+
+df = spark.read.parquet(*[str(path) for path in parquet_files])
+
+# Parquet columns are uppercase; normalize once so the rest of the notebook can use lowercase names.
+df = df.toDF(*[column.lower() for column in df.columns])
+
+df.createOrReplaceTempView("job_postings")
+
+# comment the lines below when rendering the submission
+# df.printSchema()
+# df.show(5)
+# print ("test")
+
+# Create Tables
+from pyspark.sql.functions import col, monotonically_increasing_id
+
+# Industries
+industries_df = df.select(
+    col("naics_2022_6"),
+    col("naics_2022_6_name"),
+    col("soc_5").alias("soc_code"),
+    col("soc_5_name").alias("soc_name"),
+    col("onet_name").alias("specialized_occupation"),
+    col("soc_2_name").alias("occupation_group")
+).distinct().withColumn("industry_id", monotonically_increasing_id())
+
+# Rearrange columns to have industry_id first
+industries_df = industries_df.select(
+    "industry_id",
+    "naics_2022_6",
+    "naics_2022_6_name",
+    "soc_code",
+    "soc_name",
+    "specialized_occupation",
+    "occupation_group"
+)
+
+# Companies
+companies_df = df.select(
+    col("company"),
+    col("company_name"),
+    col("company_raw"),
+    col("company_is_staffing")
+).distinct().withColumn("company_id", monotonically_increasing_id())
+
+# Rearrange columns to have company_id first
+companies_df = companies_df.select(
+    "company_id",
+    "company",
+    "company_name",
+    "company_raw",
+    "company_is_staffing"
+)
+
+# Locations
+locations_df = df.select(
+    col("location"),
+    col("city_name"),
+    col("state_name"),
+    col("county_name"),
+    col("msa"),
+    col("msa_name")
+).distinct().withColumn("location_id", monotonically_increasing_id())
+
+# Rearrange columns to have location_id first
+locations_df = locations_df.select(
+    "location_id",
+    "location",
+    "city_name",
+    "state_name",
+    "county_name",
+    "msa",
+    "msa_name"
+)
+
+
+# Job Postings
+jobpostings_df = (df
+.join(companies_df,  on="company_name", how="left")
+.join(industries_df, on="naics_2022_6", how="left")
+.join(locations_df,  on=["location", "city_name", "state_name"],  how="left")
+.select(
+    col("id"),
+    col("title_clean"),
+    col("company_id"),
+    col("industry_id"),
+    col("location_id"),
+    col("employment_type_name"),
+    col("remote_type_name"),
+    col("body"),
+    col("min_years_experience"),
+    col("max_years_experience"),
+    col("salary"),
+    col("salary_from"),
+    col("salary_to"),
+    col("posted"),
+    col("expired"),
+    col("duration")
+).distinct().withColumn("jobpostings_id", monotonically_increasing_id()))
+
+# Rearrange columns to have jobpostings_id first
+jobpostings_df = jobpostings_df.select(
+    "jobpostings_id",
+    "id",
+    "title_clean",
+    "company_id",
+    "industry_id",
+    "location_id",
+    "employment_type_name",
+    "remote_type_name",
+    "body",
+    "min_years_experience",
+    "max_years_experience",
+    "salary",
+    "salary_from",
+    "salary_to",
+    "posted",
+    "expired",
+    "duration"
+)
+
+jobpostings_df.show(5, truncate=False)
+industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)
+companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)
+locations_df.write.mode("overwrite").csv("./output/locations.csv", header=True)
+jobpostings_df.write.mode("overwrite").csv("./output/jobpostings.csv", header=True)
+
+
+```
+
+
+
+
