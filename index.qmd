@@ -64,7 +64,7 @@ spark = (
 spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
 
 # Use sample mode while testing. Set to False for the full dataset.
-USE_SAMPLE = True
+USE_SAMPLE = False
 
 data_dir = Path("../data/MET_CareerCompass_2026")
 if not data_dir.exists():
@@ -232,8 +232,9 @@ median_salary_df = spark.sql("""
         i.naics_2022_6_name AS industry_name,
         i.specialized_occupation,
         PERCENTILE_APPROX(jp.salary_from, 0.5) AS median_salary
-    FROM job_postings jp
-    JOIN industries i ON jp.industry_id = i.industry_id
+    FROM job_postings as jp
+    JOIN industries as i ON jp.industry_id = i.industry_id
+    --WHERE (i.naics_2022_4 = '5182' OR i.naics_2022_5  = '51821' OR i.naics_2022_6  = '518210')
     WHERE i.naics_2022_6  = '518210'
       AND jp.salary_from IS NOT NULL
       AND jp.salary_from > 0
@@ -241,7 +242,9 @@ median_salary_df = spark.sql("""
     ORDER BY median_salary DESC
 """)
 
+
 median_salary_pd = median_salary_df.toPandas()
+print(f"Rows returned: {len(median_salary_pd)}")
 median_salary_pd
 
 import plotly.express as px
