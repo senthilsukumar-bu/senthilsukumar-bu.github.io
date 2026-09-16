@@ -151,7 +151,7 @@ locations_df = locations_df.select(
 
 
 # Job Postings
-jobpostings_df = (df
+job_postings_df = (df
 .join(companies_df,  on="company_name", how="left")
 .join(industries_df, on="naics_2022_6", how="left")
 .join(locations_df,  on=["location", "city_name", "state_name"],  how="left")
@@ -172,11 +172,11 @@ jobpostings_df = (df
     col("posted"),
     col("expired"),
     col("duration")
-).distinct().withColumn("jobpostings_id", monotonically_increasing_id()))
+).distinct().withColumn("job_postings_id", monotonically_increasing_id()))
 
-# Rearrange columns to have jobpostings_id first
-jobpostings_df = jobpostings_df.select(
-    "jobpostings_id",
+# Rearrange columns to have job_postings_id first
+job_postings_df = job_postings_df.select(
+    "job_postings_id",
     "id",
     "title_clean",
     "company_id",
@@ -195,11 +195,17 @@ jobpostings_df = jobpostings_df.select(
     "duration"
 )
 
-jobpostings_df.show(5, truncate=False)
+job_postings_df.show(5, truncate=False)
 #industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)
 #companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)
 #locations_df.write.mode("overwrite").csv("./output/locations.csv", header=True)
-#jobpostings_df.write.mode("overwrite").csv("./output/jobpostings.csv", header=True)
+#job_postings_df.write.mode("overwrite").csv("./output/job_postings.csv", header=True)
+
+# Register SQL Tables
+industries_df.createOrReplaceTempView("industries")
+industries_df.createOrReplaceTempView("companies")
+industries_df.createOrReplaceTempView("locations")
+job_postings_df.createOrReplaceTempView("job_postings")
 
 # Test Top 5 Job Titles query
 top5_titles = spark.sql("""
@@ -218,6 +224,57 @@ top5_pd.columns = ["Job Title", "Posting Count"]
 top5_pd = top5_pd.reset_index(drop=True)
 top5_pd.index += 1  # rank starts at 1
 top5_pd
+
+# Query 1: Industry-Specific Salary Trends Grouped by Job Title
+
+median_salary_df = spark.sql("""
+    SELECT
+        i.naics_2022_6_name AS industry_name,
+        i.specialized_occupation,
+        PERCENTILE_APPROX(jp.salary_from, 0.5) AS median_salary
+    FROM job_postings jp
+    JOIN industries i ON jp.industry_id = i.industry_id
+    WHERE i.naics_2022_6  = '518210'
+      AND jp.salary_from IS NOT NULL
+      AND jp.salary_from > 0
+    GROUP BY i.naics_2022_6_name, i.specialized_occupation
+    ORDER BY median_salary DESC
+""")
+
+median_salary_pd = median_salary_df.toPandas()
+median_salary_pd
+
+import plotly.express as px
+
+fig = px.bar(
+    median_salary_pd,
+    x="median_salary",
+    y="specialized_occupation",
+    color="industry_name",
+    orientation="h",
+    title="Median Salary by Specialized Occupation — Technology Industry (NAICS 518210)",
+    labels={
+        "median_salary":         "Median Salary (USD)",
+        "specialized_occupation": "Specialized Occupation",
+        "industry_name":          "Industry"
+    },
+    text="median_salary"
+)
+
+fig.update_traces(
+    texttemplate="$%{text:,.0f}",
+    textposition="outside"
+)
+fig.update_layout(
+    xaxis_tickformat="$,.0f",
+    yaxis=dict(categoryorder="total ascending"),  # highest salary at top
+    height=max(450, len(median_salary_pd) * 38),  # scale with row count
+    margin=dict(l=20, r=150, t=60, b=40)
+)
+
+fig.show()
+
+
 ```
 
 
