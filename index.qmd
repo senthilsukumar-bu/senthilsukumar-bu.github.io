@@ -277,6 +277,7 @@ fig.update_layout(
 
 fig.show()
 
+top5_titles
 
 ```
 
