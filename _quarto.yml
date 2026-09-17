@@ -24,3 +24,9 @@ format:
       - brand
     css: styles.css
     toc: true
+
+jupyter:
+  kernelspec:
+    name: venv
+    display_name: Python (venv)
+    language: python
