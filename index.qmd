@@ -12,36 +12,6 @@ To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
 
 ![](./images/sw_bg.jpg){fig-align="center" width="75%"}
 
-## Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame
-```{python}
-from dotenv import load_dotenv
-import os
-import json
-import requests
-import pandas as pd
-from pyspark.sql import SparkSession
-
-load_dotenv(dotenv_path="/home/ubuntu/senthilsukumar-bu.github.io/.env")
-
-api_key = os.getenv("EMPLOYABILITY_API_KEY")
-base_url = os.getenv("EMPLOYABILITY_API_BASE_URL")
-path_prefix = os.getenv("EMPLOYABILITY_API_PATH_PREFIX")
-
-response = requests.get(
-    f"{base_url}/{path_prefix}/jobs/",
-    headers={"X-API-Key": api_key}
-)
-
-data = response.json()
-records = data["results"]
-
-spark = SparkSession.builder.appName("MET").getOrCreate()
-pdf = pd.DataFrame(records).astype(str)
-df = spark.createDataFrame(pdf)
-df.toPandas().head(5)
-```
-
-
 
 ## Assignment 2 - Load data into Spark, Create Tables and Queries
 ```{python}
@@ -58,144 +28,83 @@ spark = (
     .appName("JobPostingsAnalysis")
     .master("local[*]")
     .config("spark.driver.host", "localhost")
+    .config("spark.driver.memory", "4g")
+    .config("spark.executor.memory", "4g")
+    .config("spark.sql.shuffle.partitions", "8")
     .getOrCreate()
 )
-
 spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
 
-# Use sample mode while testing. Set to False for the full dataset.
-USE_SAMPLE = False
-
+USE_SAMPLE = True
 data_dir = Path("../data/MET_CareerCompass_2026")
 if not data_dir.exists():
     data_dir = Path("data/MET_CareerCompass_2026")
-
 parquet_files = sorted(data_dir.glob("*.parquet"))
-
 if USE_SAMPLE:
-    parquet_files = parquet_files[:1]
+    parquet_files = parquet_files[:5]
 
 df = spark.read.parquet(*[str(path) for path in parquet_files])
-
-# Parquet columns are uppercase; normalize once so the rest of the notebook can use lowercase names.
 df = df.toDF(*[column.lower() for column in df.columns])
-
 df.createOrReplaceTempView("job_postings")
 
-# comment the lines below when rendering the submission
-# df.printSchema()
-# df.show(5)
-# print ("test")
-
-# Create Tables
 from pyspark.sql.functions import col, monotonically_increasing_id
 
-# Industries
+# Industries dimension
 industries_df = df.select(
-    col("naics_2022_6"),
-    col("naics_2022_6_name"),
-    col("soc_5").alias("soc_code"),
-    col("soc_5_name").alias("soc_name"),
+    col("naics_2022_6"), col("naics_2022_6_name"),
+    col("soc_5").alias("soc_code"), col("soc_5_name").alias("soc_name"),
     col("onet_name").alias("specialized_occupation"),
     col("soc_2_name").alias("occupation_group")
 ).distinct().withColumn("industry_id", monotonically_increasing_id())
 
-# Rearrange columns to have industry_id first
 industries_df = industries_df.select(
-    "industry_id",
-    "naics_2022_6",
-    "naics_2022_6_name",
-    "soc_code",
-    "soc_name",
-    "specialized_occupation",
-    "occupation_group"
-)
+    "industry_id", "naics_2022_6", "naics_2022_6_name", "soc_code",
+    "soc_name", "specialized_occupation", "occupation_group")
 
-# Companies
+# Companies dimension
 companies_df = df.select(
-    col("company"),
-    col("company_name"),
-    col("company_raw"),
-    col("company_is_staffing")
+    col("company"), col("company_name"),
+    col("company_raw"), col("company_is_staffing")
 ).distinct().withColumn("company_id", monotonically_increasing_id())
 
-# Rearrange columns to have company_id first
 companies_df = companies_df.select(
-    "company_id",
-    "company",
-    "company_name",
-    "company_raw",
-    "company_is_staffing"
-)
+    "company_id", "company", "company_name", "company_raw", "company_is_staffing")
 
-# Locations
+# Locations dimension
 locations_df = df.select(
-    col("location"),
-    col("city_name"),
-    col("state_name"),
-    col("county_name"),
-    col("msa"),
-    col("msa_name")
+    col("location"), col("city_name"), col("state_name"),
+    col("county_name"), col("msa"), col("msa_name")
 ).distinct().withColumn("location_id", monotonically_increasing_id())
 
-# Rearrange columns to have location_id first
 locations_df = locations_df.select(
-    "location_id",
-    "location",
-    "city_name",
-    "state_name",
-    "county_name",
-    "msa",
-    "msa_name"
-)
+    "location_id", "location", "city_name", "state_name", "county_name", "msa", "msa_name")
 
-
-# Job Postings
+# Job Postings fact table
 job_postings_df = (df
-.join(companies_df,  on="company_name", how="left")
-.join(industries_df, on="naics_2022_6", how="left")
-.join(locations_df,  on=["location", "city_name", "state_name"],  how="left")
-.select(
-    col("id"),
-    col("title_clean"),
-    col("company_id"),
-    col("industry_id"),
-    col("location_id"),
-    col("employment_type_name"),
-    col("remote_type_name"),
-    col("body"),
-    col("min_years_experience"),
-    col("max_years_experience"),
-    col("salary"),
-    col("salary_from"),
-    col("salary_to"),
-    col("posted"),
-    col("expired"),
-    col("duration")
-).distinct().withColumn("job_postings_id", monotonically_increasing_id()))
+    .join(companies_df,  on="company_name", how="left")
+    .join(industries_df, on="naics_2022_6", how="left")
+    .join(locations_df,  on=["location", "city_name", "state_name"], how="left")
+    .select(
+        col("id"),
+        col("title_clean"),
+        col("company_id"),
+        col("industry_id"),
+        col("location_id"),
+        col("employment_type_name"),
+        col("remote_type_name"),
+        col("body"),
+        col("min_years_experience"), col("max_years_experience"),
+        col("salary"), col("salary_from"), col("salary_to"),
+        col("posted"), col("expired"), col("duration")
+    ).distinct().withColumn("job_postings_id", monotonically_increasing_id()))
 
-# Rearrange columns to have job_postings_id first
 job_postings_df = job_postings_df.select(
-    "job_postings_id",
-    "id",
-    "title_clean",
-    "company_id",
-    "industry_id",
-    "location_id",
-    "employment_type_name",
-    "remote_type_name",
-    "body",
-    "min_years_experience",
-    "max_years_experience",
-    "salary",
-    "salary_from",
-    "salary_to",
-    "posted",
-    "expired",
-    "duration"
-)
+    "job_postings_id", "id", "title_clean", "company_id", "industry_id", "location_id",
+    "employment_type_name", "remote_type_name", "body", "min_years_experience",
+    "max_years_experience", "salary", "salary_from", "salary_to", "posted", "expired", "duration")
 
 job_postings_df.show(5, truncate=False)
+
 #industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)
 #companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)
 #locations_df.write.mode("overwrite").csv("./output/locations.csv", header=True)
@@ -203,8 +112,8 @@ job_postings_df.show(5, truncate=False)
 
 # Register SQL Tables
 industries_df.createOrReplaceTempView("industries")
-industries_df.createOrReplaceTempView("companies")
-industries_df.createOrReplaceTempView("locations")
+companies_df.createOrReplaceTempView("companies")
+locations_df.createOrReplaceTempView("locations")
 job_postings_df.createOrReplaceTempView("job_postings")
 
 # Test Top 5 Job Titles query
@@ -227,21 +136,39 @@ top5_pd
 
 # Query 1: Industry-Specific Salary Trends Grouped by Job Title
 
+spark.sql("""
+    SELECT naics_2022_6, naics_2022_6_name, COUNT(*) as cnt
+    FROM industries
+    where naics_2022_6  = '518210'
+    GROUP BY naics_2022_6, naics_2022_6_name
+    ORDER BY cnt DESC
+""").toPandas()
+
 median_salary_df = spark.sql("""
     SELECT
-        i.naics_2022_6_name AS industry_name,
+        --i.naics_2022_6_name AS industry_name,
         i.specialized_occupation,
         PERCENTILE_APPROX(jp.salary_from, 0.5) AS median_salary
     FROM job_postings as jp
     JOIN industries as i ON jp.industry_id = i.industry_id
-    --WHERE (i.naics_2022_4 = '5182' OR i.naics_2022_5  = '51821' OR i.naics_2022_6  = '518210')
-    WHERE i.naics_2022_6  = '518210'
+    WHERE --i.naics_2022_6 in ('541900') -- can't find code '518210'
+    i.specialized_occupation in (
+    'Business Intelligence Analysts',
+    'Information Security Analysts',
+    'SAP Analysts / Admin',
+    'Data Scientists',
+    'Market Research Analysts and Marketing Specialists',
+    'Database Architects',
+    'Data Warehousing Specialists',
+    'Financial and Investment Analysts',
+    'Data Quality Analysts')
       AND jp.salary_from IS NOT NULL
-      AND jp.salary_from > 0
-    GROUP BY i.naics_2022_6_name, i.specialized_occupation
+      AND jp.salary_from != ''
+      AND TRY_CAST(jp.salary_from AS DOUBLE) > 0
+    GROUP BY --i.naics_2022_6_name, 
+    i.specialized_occupation
     ORDER BY median_salary DESC
 """)
-
 
 median_salary_pd = median_salary_df.toPandas()
 print(f"Rows returned: {len(median_salary_pd)}")
@@ -253,32 +180,32 @@ fig = px.bar(
     median_salary_pd,
     x="median_salary",
     y="specialized_occupation",
-    color="industry_name",
+    color="specialized_occupation",
     orientation="h",
-    title="Median Salary by Specialized Occupation — Technology Industry (NAICS 518210)",
+    title="Median Salary Trends in the Technology Sector by Specialized Occupation",
     labels={
-        "median_salary":         "Median Salary (USD)",
-        "specialized_occupation": "Specialized Occupation",
-        "industry_name":          "Industry"
+        "median_salary":          "Median Salary ($)",
+        "specialized_occupation": "Specialized Occupation"
     },
-    text="median_salary"
+    text="median_salary",
+    color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
 fig.update_traces(
     texttemplate="$%{text:,.0f}",
-    textposition="outside"
+    textposition="inside"       
 )
 fig.update_layout(
+    showlegend=False,
     xaxis_tickformat="$,.0f",
-    yaxis=dict(categoryorder="total ascending"),  # highest salary at top
-    height=max(450, len(median_salary_pd) * 38),  # scale with row count
-    margin=dict(l=20, r=150, t=60, b=40)
+    yaxis=dict(categoryorder="total ascending"),
+    height=max(450, len(median_salary_pd) * 45),
+    margin=dict(l=200, r=80, t=60, b=40),   
+    uniformtext_minsize=10,
+    uniformtext_mode="hide"    
 )
 
 fig.show()
-
-top5_titles
-
 ```
 
 
