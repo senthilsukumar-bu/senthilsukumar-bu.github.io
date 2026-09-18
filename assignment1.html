@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Week 2 Assignment 2 – Senthil Sukumar</title>
+<title>Week 2 Assignment 1 – Senthil Sukumar</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,10 +26,45 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -73,6 +108,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 <link rel="stylesheet" href="styles.css">
@@ -122,15 +160,21 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe" id="toc-assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe" class="nav-link active" data-scroll-target="#assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe">Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Week 2 Assignment 2</h1>
+<h1 class="title">Week 2 Assignment 1</h1>
 </div>
 
 
@@ -147,8 +191,225 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<section id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe" class="level2">
+<h2 class="anchored" data-anchor-id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe">Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame</h2>
+<div id="4fad0a4f" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>load_dotenv(dotenv_path<span class="op">=</span><span class="st">"/home/ubuntu/senthilsukumar-bu.github.io/.env"</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>api_key <span class="op">=</span> os.getenv(<span class="st">"EMPLOYABILITY_API_KEY"</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>base_url <span class="op">=</span> os.getenv(<span class="st">"EMPLOYABILITY_API_BASE_URL"</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>path_prefix <span class="op">=</span> os.getenv(<span class="st">"EMPLOYABILITY_API_PATH_PREFIX"</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> requests.get(</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"</span><span class="sc">{</span>base_url<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>path_prefix<span class="sc">}</span><span class="ss">/jobs/"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    headers<span class="op">=</span>{<span class="st">"X-API-Key"</span>: api_key}</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> response.json()</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>records <span class="op">=</span> data[<span class="st">"results"</span>]</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>spark <span class="op">=</span> SparkSession.builder.appName(<span class="st">"MET"</span>).getOrCreate()</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> pd.DataFrame(records).astype(<span class="bu">str</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> spark.createDataFrame(pdf)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>df.toPandas().head(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+26/09/18 16:11:25 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:659: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:936: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:687: UserWarning: createDataFrame attempted Arrow optimization because 'spark.sql.execution.arrow.pyspark.enabled' is set to true; however, failed by the reason below:
+  [PACKAGE_NOT_INSTALLED] PyArrow &gt;= 18.0.0 must be installed; however, it was not found.
+Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabled' is set to true.
+  warn(msg)
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:348: UserWarning: toPandas attempted Arrow optimization because 'spark.sql.execution.arrow.pyspark.enabled' is set to true; however, failed by the reason below:
+  [PACKAGE_NOT_INSTALLED] PyArrow &gt;= 18.0.0 must be installed; however, it was not found.
+Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabled' is set to true.
+  warn(msg)
+26/09/18 16:11:36 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+
+[Stage 0:&gt;                                                          (0 + 2) / 2]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<div>
 
 
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">job_id</th>
+<th data-quarto-table-cell-role="th">posted_at</th>
+<th data-quarto-table-cell-role="th">expires_at</th>
+<th data-quarto-table-cell-role="th">title</th>
+<th data-quarto-table-cell-role="th">normalized_title</th>
+<th data-quarto-table-cell-role="th">company_name</th>
+<th data-quarto-table-cell-role="th">organization</th>
+<th data-quarto-table-cell-role="th">is_staffing_agency</th>
+<th data-quarto-table-cell-role="th">staffing_confidence</th>
+<th data-quarto-table-cell-role="th">staffing_evidence</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">cip_name</th>
+<th data-quarto-table-cell-role="th">skills</th>
+<th data-quarto-table-cell-role="th">program_matches</th>
+<th data-quarto-table-cell-role="th">search_relevance_score</th>
+<th data-quarto-table-cell-role="th">search_rank_reason</th>
+<th data-quarto-table-cell-role="th">bls</th>
+<th data-quarto-table-cell-role="th">census</th>
+<th data-quarto-table-cell-role="th">student_signals</th>
+<th data-quarto-table-cell-role="th">description</th>
+<th data-quarto-table-cell-role="th">apply_url</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>536669</td>
+<td>2026-10-06T00:00:00+00:00</td>
+<td>NaN</td>
+<td>Clinical Genomics Coordinator</td>
+<td>Clinical Genomics Coordinator</td>
+<td>Broad Institute</td>
+<td>NaN</td>
+<td>False</td>
+<td>0.0</td>
+<td>['no staffing agency signal detected']</td>
+<td>...</td>
+<td></td>
+<td>[]</td>
+<td>[{'program_name': 'Project, Program &amp; Portfoli...</td>
+<td>NaN</td>
+<td></td>
+<td>{'area_name': 'U.S.', 'employment': 55000, 'an...</td>
+<td>{'state_code': '', 'state_name': '', 'median_h...</td>
+<td>{'work_type': '', 'visa_sponsorship': 'Unknown...</td>
+<td>We are seeking motivated individuals to work i...</td>
+<td>https://broadinstitute.avature.net/en_US/caree...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>494040</td>
+<td>2026-09-10T22:54:13.022000+00:00</td>
+<td>NaN</td>
+<td>Account Executive, Enterprise - Northeast</td>
+<td>Account Executive, Enterprise - Northeast</td>
+<td>1Password</td>
+<td>NaN</td>
+<td>True</td>
+<td>0.68</td>
+<td>['posting text: talent acquisition partner']</td>
+<td>...</td>
+<td></td>
+<td>[]</td>
+<td>[]</td>
+<td>NaN</td>
+<td></td>
+<td>{'area_name': '', 'employment': None, 'annual_...</td>
+<td>{'state_code': '', 'state_name': '', 'median_h...</td>
+<td>{'work_type': '', 'visa_sponsorship': 'Sponsor...</td>
+<td>***1Password is growing.** We’ve surpassed $40...</td>
+<td>https://jobs.ashbyhq.com/1password/9854ad4c-61...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>787827</td>
+<td>2026-09-10T21:13:45+00:00</td>
+<td>NaN</td>
+<td>Director, Channel Partnerships</td>
+<td>Director, Channel Partnerships</td>
+<td>Everlaw</td>
+<td>NaN</td>
+<td>False</td>
+<td>0.0</td>
+<td>['no staffing agency signal detected']</td>
+<td>...</td>
+<td></td>
+<td>[]</td>
+<td>[]</td>
+<td>NaN</td>
+<td></td>
+<td>{'area_name': '', 'employment': None, 'annual_...</td>
+<td>{'state_code': '', 'state_name': '', 'median_h...</td>
+<td>{'work_type': 'Full Time', 'visa_sponsorship':...</td>
+<td>### **The Role** You'll lead and scale the Par...</td>
+<td>https://job-boards.greenhouse.io/everlaw/jobs/...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>787828</td>
+<td>2026-09-10T21:13:43+00:00</td>
+<td>NaN</td>
+<td>Director, Channel Partnerships</td>
+<td>Director, Channel Partnerships</td>
+<td>Everlaw</td>
+<td>NaN</td>
+<td>False</td>
+<td>0.0</td>
+<td>['no staffing agency signal detected']</td>
+<td>...</td>
+<td></td>
+<td>[]</td>
+<td>[]</td>
+<td>NaN</td>
+<td></td>
+<td>{'area_name': '', 'employment': None, 'annual_...</td>
+<td>{'state_code': '', 'state_name': '', 'median_h...</td>
+<td>{'work_type': 'Full Time', 'visa_sponsorship':...</td>
+<td>### **The Role** You'll lead and scale the Par...</td>
+<td>https://job-boards.greenhouse.io/everlaw/jobs/...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>787829</td>
+<td>2026-09-10T20:52:41+00:00</td>
+<td>NaN</td>
+<td>Enterprise Account Executive (State, Local, an...</td>
+<td>Enterprise Account Executive</td>
+<td>Everlaw</td>
+<td>NaN</td>
+<td>False</td>
+<td>0.0</td>
+<td>['no staffing agency signal detected']</td>
+<td>...</td>
+<td></td>
+<td>[]</td>
+<td>[]</td>
+<td>NaN</td>
+<td></td>
+<td>{'area_name': '', 'employment': None, 'annual_...</td>
+<td>{'state_code': '', 'state_name': '', 'median_h...</td>
+<td>{'work_type': 'Full Time, Contract', 'visa_spo...</td>
+<td>### **The Role** You'll drive net new business...</td>
+<td>https://job-boards.greenhouse.io/everlaw/jobs/...</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 45 columns</p>
+</div>
+</div>
+</div>
+
+
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
