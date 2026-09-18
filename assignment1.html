@@ -193,7 +193,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-1---load-data-from-met-api-and-initailize-pyspark-dataframe">Assignment 1 - Load Data from MET API and Initailize pyspark DataFrame</h2>
-<div id="4fad0a4f" class="cell" data-execution_count="1">
+<div id="0db59439" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
@@ -227,7 +227,8 @@ Setting default log level to "WARN".
 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
-26/09/18 16:11:25 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+26/09/18 17:41:44 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+26/09/18 17:41:47 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:659: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:936: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
@@ -242,7 +243,7 @@ Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabl
   [PACKAGE_NOT_INSTALLED] PyArrow &gt;= 18.0.0 must be installed; however, it was not found.
 Attempting non-optimization as 'spark.sql.execution.arrow.pyspark.fallback.enabled' is set to true.
   warn(msg)
-26/09/18 16:11:36 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+26/09/18 17:42:01 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
 
 [Stage 0:&gt;                                                          (0 + 2) / 2]
 
