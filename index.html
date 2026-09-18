@@ -206,7 +206,7 @@ if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.M
 </div>
 <section id="assignment-2---load-data-into-spark-create-tables-and-queries" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-2---load-data-into-spark-create-tables-and-queries">Assignment 2 - Load data into Spark, Create Tables and Queries</h2>
-<div id="0b20f497" class="cell" data-execution_count="1">
+<div id="2bee91d5" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -233,7 +233,7 @@ if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.M
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(<span class="st">"data/MET_CareerCompass_2026"</span>)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>parquet_files <span class="op">=</span> <span class="bu">sorted</span>(data_dir.glob(<span class="st">"*.parquet"</span>))</span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_SAMPLE:</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    parquet_files <span class="op">=</span> parquet_files[:<span class="dv">5</span>]</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    parquet_files <span class="op">=</span> parquet_files[:<span class="dv">15</span>]</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> spark.read.parquet(<span class="op">*</span>[<span class="bu">str</span>(path) <span class="cf">for</span> path <span class="kw">in</span> parquet_files])</span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.toDF(<span class="op">*</span>[column.lower() <span class="cf">for</span> column <span class="kw">in</span> df.columns])</span>
@@ -326,64 +326,163 @@ if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.M
 <span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>top5_pd.index <span class="op">+=</span> <span class="dv">1</span>  <span class="co"># rank starts at 1</span></span>
 <span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>top5_pd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>
-[Stage 83:&gt;                                                         (0 + 2) / 3]
+<pre><code>WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+26/09/18 05:41:00 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 
-[Stage 83:&gt;                                                         (0 + 2) / 3]
-
-[Stage 83:&gt;                                                         (0 + 2) / 3]
-
-[Stage 83:===================&gt;                                      (1 + 2) / 3]
-
-[Stage 83:======================================&gt;                   (2 + 1) / 3]
-
-[Stage 85:&gt;                                                         (0 + 1) / 1]
+[Stage 0:&gt;                                                          (0 + 1) / 1]
 
                                                                                 
-/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
-  require_minimum_pandas_version()</code></pre>
+26/09/18 05:41:13 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+
+[Stage 1:&gt;                                                          (0 + 2) / 3]
+
+[Stage 1:&gt;    (0 + 2) / 3][Stage 2:&gt;    (0 + 0) / 3][Stage 3:&gt;    (0 + 0) / 3]
+
+[Stage 1:===&gt; (2 + 0) / 3][Stage 2:&gt;    (0 + 0) / 3][Stage 3:&gt;    (0 + 2) / 3]
+
+[Stage 1:===&gt; (2 + 1) / 3][Stage 2:&gt;    (0 + 0) / 3][Stage 3:===&gt; (2 + 1) / 3]
+
+[Stage 1:============&gt;      (2 + 1) / 3][Stage 2:&gt;                  (0 + 1) / 3]
+
+[Stage 2:&gt;                                                          (0 + 2) / 3]
+
+[Stage 2:=======================================&gt;                   (2 + 1) / 3]
+
+[Stage 5:&gt;                  (0 + 1) / 1][Stage 7:&gt;                  (0 + 1) / 1]
+
+                                                                                
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:&gt;                                                         (0 + 2) / 3]
+
+[Stage 10:===================&gt;                                      (1 + 2) / 3]
+
+[Stage 10:===================&gt;                                      (1 + 2) / 3]
+
+[Stage 10:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 10:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 10:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 12:&gt;                                                         (0 + 1) / 1]
+
+                                                                                </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>+---------------+------+---------------------------------+----------+-----------+-----------+--------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+--------------------+-------------------------------------------------------------------+-----------+---------+----------+-------+--------+
 |job_postings_id|id    |title_clean                      |company_id|industry_id|location_id|employment_type_name|remote_type_name|body                                                                                                                                                                                                                                                        |min_years_experience|max_years_experience|salary                                                             |salary_from|salary_to|posted    |expired|duration|
 +---------------+------+---------------------------------+----------+-----------+-----------+--------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+--------------------+-------------------------------------------------------------------+-----------+---------+----------+-------+--------+
-|0              |408771|Hospital Cook - PRN - Allen Rehab|909       |2364       |798        |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
-|1              |408771|Hospital Cook - PRN - Allen Rehab|909       |2052       |798        |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
-|2              |408771|Hospital Cook - PRN - Allen Rehab|909       |1897       |798        |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
-|3              |408771|Hospital Cook - PRN - Allen Rehab|909       |1775       |798        |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
-|4              |408771|Hospital Cook - PRN - Allen Rehab|909       |1662       |798        |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
+|0              |408771|Hospital Cook - PRN - Allen Rehab|1830      |2760       |1432       |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
+|1              |408771|Hospital Cook - PRN - Allen Rehab|1830      |2715       |1432       |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
+|2              |408771|Hospital Cook - PRN - Allen Rehab|1830      |2597       |1432       |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
+|3              |408771|Hospital Cook - PRN - Allen Rehab|1830      |2295       |1432       |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
+|4              |408771|Hospital Cook - PRN - Allen Rehab|1830      |1913       |1432       |                    |Unknown         |If you’re looking for a schedule that fits your lifestyle, check out PAM Health. Some things that our hospital can offer YOU: - Opportunities for growth and advancement - Flexible scheduling - Employee Bonus Referral Program $$$ - Supportive leadership|                    |                    |{'min': '', 'max': '', 'currency': '', 'period': '', 'summary': ''}|           |         |2026-06-04|       |        |
 +---------------+------+---------------------------------+----------+-----------+-----------+--------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+--------------------+-------------------------------------------------------------------+-----------+---------+----------+-------+--------+
 only showing top 5 rows</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>
-[Stage 95:&gt;                                                         (0 + 2) / 3]
+<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
 
-[Stage 95:&gt;                                                         (0 + 2) / 3]
+[Stage 14:======&gt;           (1 + 2) / 3][Stage 15:&gt;                 (0 + 0) / 3]
 
-[Stage 95:&gt;                                                         (0 + 2) / 3]
+[Stage 15:&gt;                                                         (0 + 2) / 3]
 
-[Stage 95:===================&gt;                                      (1 + 2) / 3]
+[Stage 15:===================&gt;                                      (1 + 2) / 3]
 
-[Stage 95:======================================&gt;                   (2 + 1) / 3]
+[Stage 17:&gt;                                                         (0 + 1) / 1]
 
-[Stage 97:&gt;                                                         (0 + 2) / 8]
+                                                                                
 
-[Stage 97:=======&gt;                                                  (1 + 2) / 8]
+[Stage 22:&gt;                                                         (0 + 2) / 3]
 
-[Stage 97:==============&gt;                                           (2 + 2) / 8]
+[Stage 22:&gt;                                                         (0 + 2) / 3]
 
-[Stage 97:=============================&gt;                            (4 + 2) / 8]
+[Stage 22:&gt;                                                         (0 + 2) / 3]
 
-[Stage 97:===========================================&gt;              (6 + 2) / 8]
+[Stage 22:&gt;                                                         (0 + 2) / 3]
 
-[Stage 97:==================================================&gt;       (7 + 1) / 8]
+[Stage 22:&gt;                                                         (0 + 2) / 3]
+
+[Stage 22:&gt;                                                         (0 + 2) / 3]
+
+[Stage 22:&gt;                                                         (0 + 2) / 3]
+
+[Stage 22:&gt;                                                         (0 + 2) / 3]
+
+[Stage 22:&gt;                                                         (0 + 2) / 3]
+
+[Stage 22:&gt;                                                         (0 + 2) / 3]
+
+[Stage 22:===================&gt;                                      (1 + 2) / 3]
+
+[Stage 22:===================&gt;                                      (1 + 2) / 3]
+
+[Stage 22:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 22:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 22:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 24:&gt;                                                         (0 + 2) / 8]
+
+[Stage 24:&gt;                                                         (0 + 2) / 8]
+
+[Stage 24:=======&gt;                                                  (1 + 2) / 8]
+
+[Stage 24:==============&gt;                                           (2 + 2) / 8]
+
+[Stage 24:==============&gt;                                           (2 + 2) / 8]
+
+[Stage 24:=====================&gt;                                    (3 + 2) / 8]
+
+[Stage 24:=============================&gt;                            (4 + 2) / 8]
+
+[Stage 24:=============================&gt;                            (4 + 2) / 8]
+
+[Stage 24:====================================&gt;                     (5 + 2) / 8]
+
+[Stage 24:===========================================&gt;              (6 + 2) / 8]
+
+[Stage 24:===========================================&gt;              (6 + 2) / 8]
+
+[Stage 27:&gt;                                                         (0 + 2) / 2]
 
                                                                                 
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
-  require_minimum_pandas_version()</code></pre>
+  require_minimum_pandas_version()
+
+[Stage 30:&gt;                                                         (0 + 2) / 2]
+
+                                                                                </code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="4">
+<div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
 
@@ -399,27 +498,27 @@ only showing top 5 rows</code></pre>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">1</th>
 <td>Pharmacy Technician</td>
-<td>14274</td>
+<td>285043</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">2</th>
-<td>BVT Analyst_06/05/2026</td>
-<td>8619</td>
+<td>Shift Supervisor</td>
+<td>179375</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">3</th>
-<td>Retail Sales Associate</td>
-<td>7768</td>
+<td>Store Associate</td>
+<td>174446</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">4</th>
-<td>Customer Service Representative</td>
-<td>7594</td>
+<td>Grad Pharmacist</td>
+<td>141120</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">5</th>
-<td>Account Executive - B2B</td>
-<td>6996</td>
+<td>Pharmacy Intern</td>
+<td>85973</td>
 </tr>
 </tbody>
 </table>
@@ -427,7 +526,7 @@ only showing top 5 rows</code></pre>
 </div>
 </div>
 </div>
-<div id="39fd91cd" class="cell" data-execution_count="2">
+<div id="e8739545" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Query 1: Industry-Specific Salary Trends Grouped by Job Title</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"""</span></span>
@@ -506,31 +605,37 @@ only showing top 5 rows</code></pre>
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
-[Stage 107:======================================&gt;                  (2 + 1) / 3]
+[Stage 33:&gt;                 (0 + 2) / 3][Stage 34:&gt;                 (0 + 0) / 3]
+
+[Stage 33:============&gt;     (2 + 1) / 3][Stage 34:&gt;                 (0 + 1) / 3]
+
+[Stage 34:&gt;                                                         (0 + 2) / 3]
 
                                                                                 
 
-[Stage 115:&gt;                                                        (0 + 2) / 3]
+[Stage 42:&gt;                                                         (0 + 2) / 3]
 
-[Stage 115:&gt;                                                        (0 + 2) / 3]
+[Stage 42:===================&gt;                                      (1 + 2) / 3]
 
-[Stage 115:===================&gt;                                     (1 + 2) / 3]
+[Stage 42:======================================&gt;                   (2 + 1) / 3]
 
-[Stage 115:======================================&gt;                  (2 + 1) / 3]
+[Stage 42:======================================&gt;                   (2 + 1) / 3]
 
-[Stage 117:&gt;                                                        (0 + 2) / 8]
+[Stage 42:======================================&gt;                   (2 + 1) / 3]
 
-[Stage 117:==============&gt;                                          (2 + 2) / 8]
+[Stage 44:&gt;                                                         (0 + 2) / 8]
 
-[Stage 117:=====================&gt;                                   (3 + 2) / 8]
+[Stage 44:=======&gt;                                                  (1 + 2) / 8]
 
-[Stage 117:============================&gt;                            (4 + 2) / 8]
+[Stage 44:==============&gt;                                           (2 + 2) / 8]
 
-[Stage 117:===================================&gt;                     (5 + 2) / 8]
+[Stage 44:=====================&gt;                                    (3 + 2) / 8]
 
-[Stage 117:==========================================&gt;              (6 + 2) / 8]
+[Stage 44:=============================&gt;                            (4 + 2) / 8]
 
-[Stage 117:=================================================&gt;       (7 + 1) / 8]
+[Stage 44:===========================================&gt;              (6 + 2) / 8]
+
+[Stage 47:&gt;                                                         (0 + 1) / 1]
 
                                                                                 </code></pre>
 </div>
@@ -539,9 +644,9 @@ only showing top 5 rows</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div style="height:450px; width:100%;">            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script><script>if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-4.0.0.min.js" integrity="sha256-FEYfO0yRyLtZCpnW0Dw/0DHKQO7Afrq3ml4+rBB818o=" crossorigin="anonymous"></script>                <div id="a8abb00a-b652-469c-8298-304c8d8bc1d0" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("a8abb00a-b652-469c-8298-304c8d8bc1d0")) {                    Plotly.newPlot(                        "a8abb00a-b652-469c-8298-304c8d8bc1d0",                        [{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Financial and Investment Analysts","marker":{"color":"rgb(102, 197, 204)","pattern":{"shape":""}},"name":"Financial and Investment Analysts","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAACI80A="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAACI80A="},"xaxis":"x","y":["Financial and Investment Analysts"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Business Intelligence Analysts","marker":{"color":"rgb(246, 207, 113)","pattern":{"shape":""}},"name":"Business Intelligence Analysts","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAACI80A="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAACI80A="},"xaxis":"x","y":["Business Intelligence Analysts"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Data Warehousing Specialists","marker":{"color":"rgb(248, 156, 116)","pattern":{"shape":""}},"name":"Data Warehousing Specialists","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAAAX8UA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAAAX8UA="},"xaxis":"x","y":["Data Warehousing Specialists"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Data Scientists","marker":{"color":"rgb(220, 176, 242)","pattern":{"shape":""}},"name":"Data Scientists","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAADP7EA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAADP7EA="},"xaxis":"x","y":["Data Scientists"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Market Research Analysts and Marketing Specialists","marker":{"color":"rgb(135, 197, 95)","pattern":{"shape":""}},"name":"Market Research Analysts and Marketing Specialists","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAADb6kA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAADb6kA="},"xaxis":"x","y":["Market Research Analysts and Marketing Specialists"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Database Architects","marker":{"color":"rgb(158, 185, 243)","pattern":{"shape":""}},"name":"Database Architects","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAADb6kA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAADb6kA="},"xaxis":"x","y":["Database Architects"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Information Security Analysts","marker":{"color":"rgb(254, 136, 177)","pattern":{"shape":""}},"name":"Information Security Analysts","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAADb6kA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAADb6kA="},"xaxis":"x","y":["Information Security Analysts"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"margin":{"b":0,"l":0,"r":0,"t":30}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Median Salary ($)"},"tickformat":"$,.0f"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Specialized Occupation"},"categoryorder":"total ascending","categoryarray":["Information Security Analysts","Database Architects","Market Research Analysts and Marketing Specialists","Data Scientists","Data Warehousing Specialists","Business Intelligence Analysts","Financial and Investment Analysts"]},"legend":{"title":{"text":"Specialized Occupation"},"tracegroupgap":0},"title":{"text":"Median Salary Trends in the Technology Sector by Specialized Occupation"},"barmode":"relative","margin":{"l":200,"r":80,"t":60,"b":40},"uniformtext":{"minsize":10,"mode":"hide"},"showlegend":false,"height":450},                        {"responsive": true}                    ).then(function(){
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-4.0.0.min.js" integrity="sha256-FEYfO0yRyLtZCpnW0Dw/0DHKQO7Afrq3ml4+rBB818o=" crossorigin="anonymous"></script>                <div id="7cfc6d5f-b9c0-43cd-b84f-32d2610aa213" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("7cfc6d5f-b9c0-43cd-b84f-32d2610aa213")) {                    Plotly.newPlot(                        "7cfc6d5f-b9c0-43cd-b84f-32d2610aa213",                        [{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Business Intelligence Analysts","marker":{"color":"rgb(102, 197, 204)","pattern":{"shape":""}},"name":"Business Intelligence Analysts","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAIDA9EA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAIDA9EA="},"xaxis":"x","y":["Business Intelligence Analysts"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Financial and Investment Analysts","marker":{"color":"rgb(246, 207, 113)","pattern":{"shape":""}},"name":"Financial and Investment Analysts","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAACI80A="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAACI80A="},"xaxis":"x","y":["Financial and Investment Analysts"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Data Scientists","marker":{"color":"rgb(248, 156, 116)","pattern":{"shape":""}},"name":"Data Scientists","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAGBY8EA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAGBY8EA="},"xaxis":"x","y":["Data Scientists"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Database Architects","marker":{"color":"rgb(220, 176, 242)","pattern":{"shape":""}},"name":"Database Architects","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAAC970A="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAAC970A="},"xaxis":"x","y":["Database Architects"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Information Security Analysts","marker":{"color":"rgb(135, 197, 95)","pattern":{"shape":""}},"name":"Information Security Analysts","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAAC970A="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAAC970A="},"xaxis":"x","y":["Information Security Analysts"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Data Warehousing Specialists","marker":{"color":"rgb(158, 185, 243)","pattern":{"shape":""}},"name":"Data Warehousing Specialists","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAABG7kA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAABG7kA="},"xaxis":"x","y":["Data Warehousing Specialists"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"},{"hovertemplate":"Specialized Occupation=%{y}\u003cbr\u003eMedian Salary ($)=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Market Research Analysts and Marketing Specialists","marker":{"color":"rgb(254, 136, 177)","pattern":{"shape":""}},"name":"Market Research Analysts and Marketing Specialists","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAAAADb6kA="},"textposition":"inside","x":{"dtype":"f8","bdata":"AAAAAADb6kA="},"xaxis":"x","y":["Market Research Analysts and Marketing Specialists"],"yaxis":"y","type":"bar","texttemplate":"$%{text:,.0f}"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"margin":{"b":0,"l":0,"r":0,"t":30}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Median Salary ($)"},"tickformat":"$,.0f"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Specialized Occupation"},"categoryorder":"total ascending","categoryarray":["Market Research Analysts and Marketing Specialists","Data Warehousing Specialists","Information Security Analysts","Database Architects","Data Scientists","Financial and Investment Analysts","Business Intelligence Analysts"]},"legend":{"title":{"text":"Specialized Occupation"},"tracegroupgap":0},"title":{"text":"Median Salary Trends in the Technology Sector by Specialized Occupation"},"barmode":"relative","margin":{"l":200,"r":80,"t":60,"b":40},"uniformtext":{"minsize":10,"mode":"hide"},"showlegend":false,"height":450},                        {"responsive": true}                    ).then(function(){
                             
-var gd = document.getElementById('a8abb00a-b652-469c-8298-304c8d8bc1d0');
+var gd = document.getElementById('7cfc6d5f-b9c0-43cd-b84f-32d2610aa213');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -566,7 +671,7 @@ if (outputEl) {{
                         })                };            </script>        </div>
 </div>
 </div>
-<div id="1fda850a" class="cell" data-execution_count="3">
+<div id="d1a131d8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Query 2: Top Companies Hiring Remote Jobs in California</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>remote_ca_df <span class="op">=</span> spark.sql(<span class="ss">f"""</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ss">    SELECT</span></span>
@@ -631,27 +736,35 @@ if (outputEl) {{
 <pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
-[Stage 139:&gt;                                                        (0 + 2) / 3]
+[Stage 55:==&gt; (2 + 1) / 3][Stage 56:==&gt; (2 + 1) / 3][Stage 57:&gt;   (0 + 0) / 3]
 
-[Stage 139:===================&gt;                                     (1 + 2) / 3]
+[Stage 57:&gt;                                                         (0 + 2) / 3]
 
-[Stage 139:======================================&gt;                  (2 + 1) / 3]
+                                                                                
 
-[Stage 141:&gt;                                                        (0 + 2) / 8]
+[Stage 66:&gt;                                                         (0 + 2) / 3]
 
-[Stage 141:=======&gt;                                                 (1 + 2) / 8]
+[Stage 66:&gt;                                                         (0 + 2) / 3]
 
-[Stage 141:==============&gt;                                          (2 + 2) / 8]
+[Stage 66:===================&gt;                                      (1 + 2) / 3]
 
-[Stage 141:=====================&gt;                                   (3 + 2) / 8]
+[Stage 66:======================================&gt;                   (2 + 1) / 3]
 
-[Stage 141:============================&gt;                            (4 + 2) / 8]
+[Stage 68:&gt;                                                         (0 + 2) / 8]
 
-[Stage 141:===================================&gt;                     (5 + 2) / 8]
+[Stage 68:=======&gt;                                                  (1 + 2) / 8]
 
-[Stage 141:==========================================&gt;              (6 + 2) / 8]
+[Stage 68:==============&gt;                                           (2 + 2) / 8]
 
-[Stage 141:=================================================&gt;       (7 + 1) / 8]
+[Stage 68:=====================&gt;                                    (3 + 2) / 8]
+
+[Stage 68:=============================&gt;                            (4 + 2) / 8]
+
+[Stage 68:====================================&gt;                     (5 + 2) / 8]
+
+[Stage 68:===========================================&gt;              (6 + 2) / 8]
+
+[Stage 68:==================================================&gt;       (7 + 1) / 8]
 
                                                                                 </code></pre>
 </div>
@@ -659,13 +772,147 @@ if (outputEl) {{
 <pre><code>Rows returned: 5</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_3113/2836597101.py:40: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator. Otherwise, ticks may be mislabeled.
+<pre><code>/tmp/ipykernel_5320/2836597101.py:40: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator. Otherwise, ticks may be mislabeled.
   ax.set_xticklabels(</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
 <p><img src="index_files/figure-html/cell-4-output-4.png" width="1240" height="607" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="5ac2a3b9" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Query 3: Monthly Job Posting Trends in California</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>monthly_df <span class="op">=</span> spark.sql(<span class="st">"""</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="st">        YEAR(to_date(jp.posted,  'yyyy-MM-dd')) AS year,</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="st">        MONTH(to_date(jp.posted, 'yyyy-MM-dd')) AS month,</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="st">        COUNT(*) AS job_count</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM job_postings jp</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="st">    JOIN locations l ON jp.location_id = l.location_id</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE l.state_name = 'California'</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="st">      AND to_date(jp.posted, 'yyyy-MM-dd') IS NOT NULL</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="st">    GROUP BY year, month</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="st">    ORDER BY year DESC, month DESC</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>monthly_pd <span class="op">=</span> monthly_df.toPandas()</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Rows returned: </span><span class="sc">{</span><span class="bu">len</span>(monthly_pd)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>monthly_pd</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> calendar</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Year as string so seaborn treats it as categorical hue (distinct colors, not gradient)</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>monthly_pd[<span class="st">"year"</span>] <span class="op">=</span> monthly_pd[<span class="st">"year"</span>].astype(<span class="bu">str</span>)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>monthly_pd <span class="op">=</span> monthly_pd.sort_values([<span class="st">"year"</span>, <span class="st">"month"</span>])</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">6</span>))</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>sns.lineplot(</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>monthly_pd,</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">"month"</span>,</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">"job_count"</span>,</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    hue<span class="op">=</span><span class="st">"year"</span>,</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    markersize<span class="op">=</span><span class="dv">6</span>,</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">13</span>))</span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>ax.set_xticklabels([calendar.month_abbr[m] <span class="cf">for</span> m <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">13</span>)], fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Monthly Job Posting Trends in California"</span>, fontsize<span class="op">=</span><span class="dv">13</span>, pad<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Month"</span>, fontsize<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Number of Job Postings"</span>, fontsize<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>ax.legend(title<span class="op">=</span><span class="st">"Year"</span>, title_fontsize<span class="op">=</span><span class="dv">10</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>ax.yaxis.grid(<span class="va">True</span>, linestyle<span class="op">=</span><span class="st">"-"</span>, linewidth<span class="op">=</span><span class="fl">0.5</span>, color<span class="op">=</span><span class="st">"#cccccc"</span>)</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>ax.set_axisbelow(<span class="va">True</span>)</span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>ax.spines[<span class="st">"top"</span>].set_visible(<span class="va">False</span>)</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>ax.spines[<span class="st">"right"</span>].set_visible(<span class="va">False</span>)</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+
+[Stage 73:&gt;                 (0 + 2) / 3][Stage 74:&gt;                 (0 + 0) / 3]
+
+[Stage 73:============&gt;     (2 + 1) / 3][Stage 74:&gt;                 (0 + 1) / 3]
+
+[Stage 74:&gt;                                                         (0 + 2) / 3]
+
+                                                                                
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:&gt;                                                         (0 + 2) / 3]
+
+[Stage 82:===================&gt;                                      (1 + 2) / 3]
+
+[Stage 82:===================&gt;                                      (1 + 2) / 3]
+
+[Stage 82:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 82:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 82:======================================&gt;                   (2 + 1) / 3]
+
+[Stage 84:&gt;                                                         (0 + 2) / 8]
+
+[Stage 84:&gt;                                                         (0 + 2) / 8]
+
+[Stage 84:=======&gt;                                                  (1 + 2) / 8]
+
+[Stage 84:==============&gt;                                           (2 + 2) / 8]
+
+[Stage 84:==============&gt;                                           (2 + 2) / 8]
+
+[Stage 84:=====================&gt;                                    (3 + 2) / 8]
+
+[Stage 84:=============================&gt;                            (4 + 2) / 8]
+
+[Stage 84:=============================&gt;                            (4 + 2) / 8]
+
+[Stage 84:====================================&gt;                     (5 + 2) / 8]
+
+[Stage 84:===========================================&gt;              (6 + 2) / 8]
+
+[Stage 84:===========================================&gt;              (6 + 2) / 8]
+
+[Stage 84:==================================================&gt;       (7 + 1) / 8]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows returned: 6</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/cell-5-output-3.png" width="1242" height="566" class="figure-img"></p>
 </figure>
 </div>
 </div>
