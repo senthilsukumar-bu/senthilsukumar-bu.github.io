@@ -1,0 +1,12 @@
+{
+  "hash": "d0e7e8726e3b7d87dc4555225d8d2e27",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Senthil Sukumar\"\nformat: html\njupyter: python3\nexecute:\n  freeze: true \n---\n\n",
+    "supporting": [
+      "assignment2_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

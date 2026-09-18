@@ -3,7 +3,7 @@ title: "Senthil Sukumar"
 format: html
 jupyter: python3
 execute:
-  freeze: auto 
+  freeze: true 
 ---
 
 This is a Quarto website.
