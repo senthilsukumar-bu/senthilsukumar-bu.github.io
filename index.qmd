@@ -206,6 +206,68 @@ fig.update_layout(
 )
 
 fig.show()
+
+
+# Top Companies Hiring Remote Jobs in California
+remote_ca_df = spark.sql(f"""
+    SELECT
+        c.company_name,
+        COUNT(*) AS remote_jobs
+    FROM job_postings jp
+    JOIN companies  c ON jp.company_id  = c.company_id
+    JOIN locations  l ON jp.location_id = l.location_id
+    WHERE jp.remote_type_name = 'Remote'
+      AND l.state_name        = 'California'
+    GROUP BY c.company_name
+    ORDER BY remote_jobs DESC
+    LIMIT 5
+""")
+
+remote_ca_pd = remote_ca_df.toPandas()
+print(f"Rows returned: {len(remote_ca_pd)}")
+remote_ca_pd
+
+fig, ax = plt.subplots(figsize=(13, 6))
+
+sns.barplot(
+    data=remote_ca_pd,
+    x="company_name",
+    y="remote_jobs",
+    color="#5B7FA6",          # muted steel blue matching target chart
+    order=remote_ca_pd["company_name"],
+    ax=ax
+)
+
+# Labels & title
+ax.set_title("Top 5 Companies Offering Remote Jobs in California",
+             fontsize=13, pad=12)
+ax.set_xlabel("Company Name", fontsize=11)
+ax.set_ylabel("Number of Remote Jobs", fontsize=11)
+
+# Rotate x-axis labels
+ax.set_xticklabels(
+    ax.get_xticklabels(),
+    rotation=45,
+    ha="right",
+    fontsize=10
+)
+
+# Grid & spines
+ax.yaxis.grid(True, linestyle="-", linewidth=0.5, color="#cccccc")
+ax.set_axisbelow(True)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+# Italic caption
+fig.text(
+    0.5, -0.04,
+    "Solution 2, colors/details can change",
+    ha="center", fontstyle="italic", fontsize=10, color="#555555"
+)
+
+plt.tight_layout()
+plt.show()
+
 ```
 
 
