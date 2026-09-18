@@ -30,12 +30,12 @@ spark = (
     .config("spark.driver.host", "localhost")
     .config("spark.driver.memory", "4g")
     .config("spark.executor.memory", "4g")
-    .config("spark.sql.shuffle.partitions", "8")
+    .config("spark.sql.shuffle.partitions", str(os.cpu_count() * 2)) 
     .getOrCreate()
 )
 spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
 
-USE_SAMPLE = True
+USE_SAMPLE = False
 data_dir = Path("../data/MET_CareerCompass_2026")
 if not data_dir.exists():
     data_dir = Path("data/MET_CareerCompass_2026")
@@ -45,9 +45,11 @@ if USE_SAMPLE:
 
 df = spark.read.parquet(*[str(path) for path in parquet_files])
 df = df.toDF(*[column.lower() for column in df.columns])
+df.cache()
+df.count()
 df.createOrReplaceTempView("job_postings")
 
-from pyspark.sql.functions import col, monotonically_increasing_id
+from pyspark.sql.functions import col, monotonically_increasing_id, broadcast
 
 # Industries dimension
 industries_df = df.select(
@@ -133,7 +135,9 @@ top5_pd.columns = ["Job Title", "Posting Count"]
 top5_pd = top5_pd.reset_index(drop=True)
 top5_pd.index += 1  # rank starts at 1
 top5_pd
+```
 
+```{python}
 # Query 1: Industry-Specific Salary Trends Grouped by Job Title
 
 spark.sql("""
@@ -206,9 +210,10 @@ fig.update_layout(
 )
 
 fig.show()
+```
 
-
-# Top Companies Hiring Remote Jobs in California
+```{python}
+# Query 2: Top Companies Hiring Remote Jobs in California
 remote_ca_df = spark.sql(f"""
     SELECT
         c.company_name,
@@ -217,7 +222,7 @@ remote_ca_df = spark.sql(f"""
     JOIN companies  c ON jp.company_id  = c.company_id
     JOIN locations  l ON jp.location_id = l.location_id
     WHERE jp.remote_type_name = 'Remote'
-      AND l.state_name        = 'California'
+      AND l.state_name = 'California'
     GROUP BY c.company_name
     ORDER BY remote_jobs DESC
     LIMIT 5
@@ -227,18 +232,20 @@ remote_ca_pd = remote_ca_df.toPandas()
 print(f"Rows returned: {len(remote_ca_pd)}")
 remote_ca_pd
 
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 fig, ax = plt.subplots(figsize=(13, 6))
 
 sns.barplot(
     data=remote_ca_pd,
     x="company_name",
     y="remote_jobs",
-    color="#5B7FA6",          # muted steel blue matching target chart
+    color="#5B7FA6",      
     order=remote_ca_pd["company_name"],
     ax=ax
 )
 
-# Labels & title
 ax.set_title("Top 5 Companies Offering Remote Jobs in California",
              fontsize=13, pad=12)
 ax.set_xlabel("Company Name", fontsize=11)
@@ -252,13 +259,12 @@ ax.set_xticklabels(
     fontsize=10
 )
 
-# Grid & spines
 ax.yaxis.grid(True, linestyle="-", linewidth=0.5, color="#cccccc")
 ax.set_axisbelow(True)
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 
-# Italic caption
+
 fig.text(
     0.5, -0.04,
     "Solution 2, colors/details can change",
@@ -272,4 +278,131 @@ plt.show()
 
 
 
+```{python}
+# Query 3: Monthly Job Posting Trends in California
+monthly_df = spark.sql("""
+    SELECT
+        YEAR(to_date(jp.posted,  'yyyy-MM-dd')) AS year,
+        MONTH(to_date(jp.posted, 'yyyy-MM-dd')) AS month,
+        COUNT(*) AS job_count
+    FROM job_postings jp
+    JOIN locations l ON jp.location_id = l.location_id
+    WHERE l.state_name = 'California'
+      AND to_date(jp.posted, 'yyyy-MM-dd') IS NOT NULL
+    GROUP BY year, month
+    ORDER BY year DESC, month DESC
+""")
 
+monthly_pd = monthly_df.toPandas()
+print(f"Rows returned: {len(monthly_pd)}")
+monthly_pd
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import calendar
+
+# Year as string so seaborn treats it as categorical hue (distinct colors, not gradient)
+monthly_pd["year"] = monthly_pd["year"].astype(str)
+monthly_pd = monthly_pd.sort_values(["year", "month"])
+
+fig, ax = plt.subplots(figsize=(13, 6))
+
+sns.lineplot(
+    data=monthly_pd,
+    x="month",
+    y="job_count",
+    hue="year",
+    marker="o",
+    linewidth=2,
+    markersize=6,
+    ax=ax
+)
+
+ax.set_xticks(range(1, 13))
+ax.set_xticklabels([calendar.month_abbr[m] for m in range(1, 13)], fontsize=10)
+
+ax.set_title("Monthly Job Posting Trends in California", fontsize=13, pad=12)
+ax.set_xlabel("Month", fontsize=11)
+ax.set_ylabel("Number of Job Postings", fontsize=11)
+ax.legend(title="Year", title_fontsize=10, fontsize=10)
+
+ax.yaxis.grid(True, linestyle="-", linewidth=0.5, color="#cccccc")
+ax.set_axisbelow(True)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+
+```{python}
+# Query 4: Salary Comparisons Across Major US Cities
+salary_metro_df = spark.sql("""
+    SELECT
+        CASE l.msa
+            WHEN '47900' THEN 'Washington DC'
+            WHEN '41860' THEN 'San Francisco'
+            WHEN '42660' THEN 'Seattle'
+            WHEN '26420' THEN 'Houston'
+            WHEN '31080' THEN 'Los Angeles'
+            WHEN '35620' THEN 'New York'
+            WHEN '14460' THEN 'Boston'
+            WHEN '34980' THEN 'Nashville'
+            WHEN '12420' THEN 'Austin'
+            WHEN '19100' THEN 'Dallas'
+            WHEN '19740' THEN 'Denver'
+            WHEN '28140' THEN 'Kansas City'
+        END AS metro_area,
+        ROUND(AVG(TRY_CAST(jp.salary AS DOUBLE)), 2) AS avg_salary,
+        COUNT(*) AS job_count
+    FROM job_postings jp
+    JOIN locations l ON jp.location_id = l.location_id
+    WHERE jp.salary IS NOT NULL
+      AND TRY_CAST(jp.salary AS DOUBLE) > 0
+      AND l.msa IN (
+          '47900', '41860', '42660', '26420', '31080', '35620',
+          '14460', '34980', '12420', '19100', '19740', '28140'
+      )
+    GROUP BY metro_area
+    ORDER BY avg_salary DESC
+""")
+
+salary_metro_pd = salary_metro_df.toPandas()
+print(f"Rows returned: {len(salary_metro_pd)}")
+salary_metro_pd
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(13, 8))
+
+sns.barplot(
+    data=salary_metro_pd,
+    x="avg_salary",
+    y="metro_area",
+    color="#4B6C9E",                          # muted steel blue matching target
+    order=salary_metro_pd["metro_area"],       # preserve SQL sort order (desc)
+    ax=ax
+)
+
+ax.set_title("Average Salary Comparisons Across Major US Metro Areas",
+             fontsize=13, pad=12)
+ax.set_xlabel("Average Salary ($)", fontsize=11)
+ax.set_ylabel("Metro Area", fontsize=11)
+
+# Vertical dashed gridlines only — matching the chart
+ax.xaxis.grid(True, linestyle="--", linewidth=0.6, color="#cccccc")
+ax.set_axisbelow(True)
+
+# Full box border (all spines visible)
+for spine in ax.spines.values():
+    spine.set_visible(True)
+
+plt.tight_layout()
+plt.show()
+
+
+```
