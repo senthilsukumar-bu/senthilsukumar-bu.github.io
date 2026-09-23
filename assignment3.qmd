@@ -21,6 +21,9 @@ from pyspark.sql.functions import col, monotonically_increasing_id
 
 np.random.seed(42)
 
+import plotly.io as pio
+pio.renderers.default = "plotly_mimetype"
+
 pio.renderers.default = "plotly_mimetype"
 
 # Initialize Spark Session
@@ -173,7 +176,7 @@ fig.update_layout(
     margin=dict(t=60, b=260, l=90, r=20),
 )
 
-fig.show()
+fig.show(renderer="plotly_mimetype")
 
 ```
 
