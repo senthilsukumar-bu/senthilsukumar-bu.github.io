@@ -14,6 +14,8 @@ from pyspark.sql import SparkSession
 import re
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
+
 from pathlib import Path
 from pyspark.sql.functions import col, split, explode, regexp_replace, transform, when
 from pyspark.sql import functions as F
@@ -151,8 +153,23 @@ spark.sql("SELECT * FROM job_postings_clean LIMIT 5").toPandas()
 ## TBD
 ```{python}
 
+salary_pd = spark.sql("""
+    SELECT
+        NAICS2_NAME,
+        EMPLOYMENT_TYPE_NAME_CLEAN,
+        TRY_CAST(SALARY_IMPUTED_ANNUAL AS DOUBLE) AS SALARY_IMPUTED_ANNUAL
+    FROM job_postings_clean
+    WHERE TRY_CAST(SALARY_IMPUTED_ANNUAL AS DOUBLE) > 1000
+      AND NAICS2_NAME IS NOT NULL
+      AND EMPLOYMENT_TYPE_NAME_CLEAN IS NOT NULL
+""").toPandas()
+
+# remove 99th pct outliers - e.g. some annual salaries are over 100M USD
+p99 = salary_pd["SALARY_IMPUTED_ANNUAL"].quantile(0.99)
+salary_pd = salary_pd[salary_pd["SALARY_IMPUTED_ANNUAL"] <= p99]
+
 fig = px.box(
-    cleaned_df,
+    salary_pd,
     x="NAICS2_NAME",
     y="SALARY_IMPUTED_ANNUAL",
     color="EMPLOYMENT_TYPE_NAME_CLEAN",
