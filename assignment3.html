@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-55617497126496852ff9f5a59253c640.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-3e9b1289f5f353c49b617ce48ad2bc38.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -189,7 +189,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="ba65ca3d" class="cell" data-execution_count="1">
+<div id="a3949b27" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.io <span class="im">as</span> pio</span>
@@ -242,22 +242,79 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co">#df.printSchema() # comment this line when rendering the submission</span></span>
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="co">#df.show(5)</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings LIMIT 50"</span>).toPandas()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings LIMIT 5"</span>).toPandas()</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="co">#Use SALARY directly if it's a valid non-zero number</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="co">#Calclate Average of SALARY_FROM + SALARY_TO if both are valid</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="co">#Default to whichever single field is available</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="co">#Default to NULL if all three are missing/empty/zero</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>cleaned_df <span class="op">=</span> spark.sql(<span class="st">"""</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="st">        *,</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="st">        CASE</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN SALARY IS NOT NULL</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND SALARY != ''</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND TRY_CAST(SALARY AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY AS DOUBLE)</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND TRY_CAST(SALARY_TO AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN (TRY_CAST(SALARY_FROM AS DOUBLE) + TRY_CAST(SALARY_TO AS DOUBLE)) / 2.0</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY_FROM AS DOUBLE)</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_TO AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY_TO AS DOUBLE)</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="st">            ELSE NULL</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="st">        END AS SALARY_IMPUTED,</span></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="st">        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[</span><span class="ch">\\</span><span class="st">n</span><span class="ch">\\</span><span class="st">r]', ' ') AS EDUCATION_LEVELS_CLEAN</span></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM job_postings</span></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>cleaned_df.createOrReplaceTempView(<span class="st">"job_postings_clean"</span>)</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings_clean LIMIT 5"</span>).toPandas()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+<pre><code>WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+26/09/23 06:18:14 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+
+[Stage 0:&gt;                                                          (0 + 1) / 1]
+
+                                                                                
+26/09/23 06:18:24 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
-[Stage 8:===================&gt;                                       (2 + 2) / 6]
+[Stage 1:&gt;                                                          (0 + 2) / 6]
 
-[Stage 8:=============================&gt;                             (3 + 2) / 6]
+[Stage 1:===================&gt;                                       (2 + 2) / 6]
 
-[Stage 8:=======================================&gt;                   (4 + 2) / 6]
+[Stage 1:=============================&gt;                             (3 + 2) / 6]
 
-[Stage 8:=================================================&gt;         (5 + 1) / 6]
+[Stage 1:=======================================&gt;                   (4 + 2) / 6]
+
+[Stage 1:=================================================&gt;         (5 + 1) / 6]
+
+                                                                                
+/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+
+[Stage 3:&gt;                                                          (0 + 2) / 6]
+
+[Stage 3:===================&gt;                                       (2 + 2) / 6]
+
+[Stage 3:=============================&gt;                             (3 + 2) / 6]
+
+[Stage 3:=======================================&gt;                   (4 + 2) / 6]
 
                                                                                 </code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
 
@@ -276,8 +333,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th">ACTIVE_SOURCES_INFO</th>
 <th data-quarto-table-cell-role="th">TITLE_RAW</th>
 <th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">WRDS_GVKEY</th>
-<th data-quarto-table-cell-role="th">WRDS_COMPANY_NAME</th>
 <th data-quarto-table-cell-role="th">WRDS_NAICS</th>
 <th data-quarto-table-cell-role="th">WRDS_NAICS_2022</th>
 <th data-quarto-table-cell-role="th">WRDS_NAICS_2022_NAME</th>
@@ -286,6 +341,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th">WRDS_AS_OF</th>
 <th data-quarto-table-cell-role="th">WRDS_MATCH_BASIS</th>
 <th data-quarto-table-cell-role="th">NAICS_REVIEW_STATUS</th>
+<th data-quarto-table-cell-role="th">SALARY_IMPUTED</th>
+<th data-quarto-table-cell-role="th">EDUCATION_LEVELS_CLEAN</th>
 </tr>
 </thead>
 <tbody>
@@ -310,8 +367,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>NaN</td>
 <td>NaN</td>
 <td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>100000.0</td>
+<td>["Bachelor's degree", "Master's degree"]</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
@@ -335,7 +392,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>NaN</td>
 <td>NaN</td>
 <td>NaN</td>
-<td>NaN</td>
+<td>["High school diploma or equivalent"]</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
@@ -359,7 +416,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>NaN</td>
 <td>NaN</td>
 <td>NaN</td>
-<td>NaN</td>
+<td>["High school diploma or equivalent"]</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
@@ -382,8 +439,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>NaN</td>
 <td>NaN</td>
 <td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>162700.0</td>
+<td>["High school diploma or equivalent"]</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
@@ -407,1092 +464,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>NaN</td>
 <td>NaN</td>
 <td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>208145</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["successfactors"]</td>
-<td>https://jobs.hii-tsd.com/job/Fayetteville%2C-N...</td>
-<td>["https://jobs.hii-tsd.com/job/Fayetteville%2C...</td>
-<td>[{"source": "jobhive", "source_platform": "suc...</td>
-<td>Collection Manager (Intelligence Analyst 4-5) ...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>208146</td>
-<td>2026-06-04</td>
-<td>2026-06-08</td>
-<td>4</td>
-<td>["fantastic_jobs"]</td>
-<td>["fantastic_jobs"]</td>
-<td>https://jobs.smartrecruiters.com/MicroStrategy...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>Operations Analyst</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>208147</td>
-<td>2026-07-17</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["successfactors"]</td>
-<td>https://career4.successfactors.com/sfcareer/jo...</td>
-<td>["https://career4.successfactors.com/sfcareer/...</td>
-<td>[{"source": "jobhive", "source_platform": "suc...</td>
-<td>Research Analyst I</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>208148</td>
-<td>2026-06-22</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["phenom"]</td>
-<td>https://jobs.cvshealth.com/job/R0863931</td>
-<td>["https://jobs.cvshealth.com/job/R0863931"]</td>
-<td>[{"source": "jobhive", "source_platform": "phe...</td>
-<td>Principal AI Cloud Security Architect</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>208149</td>
-<td>2026-07-25</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/Dominos/74400...</td>
-<td>["https://jobs.smartrecruiters.com/Dominos/744...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Customer Service Rep(08965) Northchase, Wilmin...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">10</th>
-<td>208150</td>
-<td>2026-07-14</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["oracle"]</td>
-<td>https://efds.fa.em5.oraclecloud.com/?keyword=&amp;...</td>
-<td>["https://efds.fa.em5.oraclecloud.com/?keyword...</td>
-<td>[{"source": "jobhive", "source_platform": "ora...</td>
-<td>Manager Architecture and Information Security,...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">11</th>
-<td>208151</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["google"]</td>
-<td>https://www.google.com/about/careers/applicati...</td>
-<td>["https://www.google.com/about/careers/applica...</td>
-<td>[{"source": "jobhive", "source_platform": "goo...</td>
-<td>Customer Engineer, Data/Analytics, Google Publ...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">12</th>
-<td>208152</td>
-<td>2026-08-18</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["amazon"]</td>
-<td>https://account.amazon.jobs/jobs/10505529/apply</td>
-<td>["https://account.amazon.jobs/jobs/10505529/ap...</td>
-<td>[{"source": "jobhive", "source_platform": "ama...</td>
-<td>Senior Financial Analyst, AWS Containers and S...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">13</th>
-<td>208153</td>
-<td>2026-06-04</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["amazon"]</td>
-<td>https://account.amazon.jobs/jobs/10440192/apply</td>
-<td>["https://account.amazon.jobs/jobs/10440192/ap...</td>
-<td>[{"source": "jobhive", "source_platform": "ama...</td>
-<td>Software Dev Engineer II, Secure Customer Cont...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">14</th>
-<td>208154</td>
-<td>2026-06-11</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["workable"]</td>
-<td>https://apply.workable.com/j/0B6E125B99/apply</td>
-<td>["https://apply.workable.com/j/0B6E125B99/apply"]</td>
-<td>[{"source": "jobhive", "source_platform": "wor...</td>
-<td>Environmental Project Manager</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">15</th>
-<td>208155</td>
-<td>2026-06-09</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["phenom"]</td>
-<td>https://jobs.ascension.org/job/434239</td>
-<td>["https://jobs.ascension.org/job/434239"]</td>
-<td>[{"source": "jobhive", "source_platform": "phe...</td>
-<td>Radiology Student Intern</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">16</th>
-<td>208156</td>
-<td>2026-07-15</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["oracle"]</td>
-<td>https://ejis.fa.us6.oraclecloud.com/?keyword=&amp;...</td>
-<td>["https://ejis.fa.us6.oraclecloud.com/?keyword...</td>
-<td>[{"source": "jobhive", "source_platform": "ora...</td>
-<td>Biostatistician II-OB/GYN</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">17</th>
-<td>208157</td>
-<td>2026-01-09</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["icims"]</td>
-<td>https://careers-ovg.icims.com/jobs/28678/cockt...</td>
-<td>["https://careers-ovg.icims.com/jobs/28678/coc...</td>
-<td>[{"source": "jobhive", "source_platform": "ici...</td>
-<td>Cocktail Server - - Whitewater Amphitheater</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">18</th>
-<td>208158</td>
-<td>2026-07-17</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["rareroles"]</td>
-<td>["rareroles"]</td>
-<td>https://job-boards.greenhouse.io/olsson/jobs/5...</td>
-<td>["https://job-boards.greenhouse.io/olsson/jobs...</td>
-<td>[{"source": "rareroles", "source_platform": "r...</td>
-<td>Aviation Construction Manager / Inspector</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">19</th>
-<td>208159</td>
-<td>2026-06-03</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["datablist"]</td>
-<td>["datablist"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>[{"source": "datablist", "source_platform": "d...</td>
-<td>Senior Business Systems Analyst</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">20</th>
-<td>208160</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["workday"]</td>
-<td>https://lseg.wd3.myworkdayjobs.com/careers/job...</td>
-<td>["https://lseg.wd3.myworkdayjobs.com/careers/j...</td>
-<td>[{"source": "jobhive", "source_platform": "wor...</td>
-<td>Group Strategic Relationship Director</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">21</th>
-<td>208161</td>
-<td>2024-07-22</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["icims"]</td>
-<td>https://careers-sparinc.icims.com/jobs/139809/...</td>
-<td>["https://careers-sparinc.icims.com/jobs/13980...</td>
-<td>[{"source": "jobhive", "source_platform": "ici...</td>
-<td>Remodel Merchandiser</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">22</th>
-<td>208162</td>
-<td>2026-06-04</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["datablist"]</td>
-<td>["datablist"]</td>
-<td>https://jobs.smartrecruiters.com/WellmarkInc/7...</td>
-<td>["https://jobs.smartrecruiters.com/WellmarkInc...</td>
-<td>[{"source": "datablist", "source_platform": "d...</td>
-<td>Sr Financial &amp; Data Analyst – Healthcare Econo...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">23</th>
-<td>208163</td>
-<td>2026-05-12</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["datablist"]</td>
-<td>["datablist"]</td>
-<td>https://fa-ewkd-saasfaprod1.fa.ocs.oraclecloud...</td>
-<td>["https://fa-ewkd-saasfaprod1.fa.ocs.oracleclo...</td>
-<td>[{"source": "datablist", "source_platform": "d...</td>
-<td>Student Assistant - FWS_Central Human Resources</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">24</th>
-<td>208164</td>
-<td>2026-06-05</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["datablist"]</td>
-<td>["datablist"]</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>[{"source": "datablist", "source_platform": "d...</td>
-<td>Senior Software Engineer - Manufacturing Autom...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">25</th>
-<td>208165</td>
-<td>2025-05-27</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/RESPECInc/744...</td>
-<td>["https://jobs.smartrecruiters.com/RESPECInc/7...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Water/Wastewater Project Engineer/Manager</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">26</th>
-<td>208166</td>
-<td>2026-06-16</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["greenhouse"]</td>
-<td>https://boards.greenhouse.io/rdccareers/jobs/7...</td>
-<td>["https://boards.greenhouse.io/rdccareers/jobs...</td>
-<td>[{"source": "jobhive", "source_platform": "gre...</td>
-<td>Sr. Reporter, Celebrity &amp; Lifestyle</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">27</th>
-<td>208167</td>
-<td>2026-06-08</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["icims"]</td>
-<td>https://careers-peraton.icims.com/jobs/167413/...</td>
-<td>["https://careers-peraton.icims.com/jobs/16741...</td>
-<td>[{"source": "jobhive", "source_platform": "ici...</td>
-<td>Senior Network Engineer</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">28</th>
-<td>208168</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["successfactors"]</td>
-<td>https://careers.hmhco.com/job/Sr-Analytics-Eng...</td>
-<td>["https://careers.hmhco.com/job/Sr-Analytics-E...</td>
-<td>[{"source": "jobhive", "source_platform": "suc...</td>
-<td>Sr Analytics Engineer</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">29</th>
-<td>208169</td>
-<td>2026-06-14</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/Dominos/74400...</td>
-<td>["https://jobs.smartrecruiters.com/Dominos/744...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Cashier / Pizza Maker (02220)</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">30</th>
-<td>208170</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["workday"]</td>
-<td>https://ngc.wd1.myworkdayjobs.com/northrop_gru...</td>
-<td>["https://ngc.wd1.myworkdayjobs.com/northrop_g...</td>
-<td>[{"source": "jobhive", "source_platform": "wor...</td>
-<td>Principal Program Cost and Schedule Control An...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">31</th>
-<td>208171</td>
-<td>2026-06-11</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["oracle"]</td>
-<td>https://eofe.fa.us2.oraclecloud.com/?keyword=&amp;...</td>
-<td>["https://eofe.fa.us2.oraclecloud.com/?keyword...</td>
-<td>[{"source": "jobhive", "source_platform": "ora...</td>
-<td>Senior Vice President, Segment Marketing, Asse...</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">32</th>
-<td>208172</td>
-<td>2026-06-05</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["fantastic_jobs"]</td>
-<td>["greenhouse"]</td>
-<td>https://job-boards.greenhouse.io/exadelinc/job...</td>
-<td>["https://job-boards.greenhouse.io/exadelinc/j...</td>
-<td>[{"source": "fantastic_jobs", "source_platform...</td>
-<td>Lead Data Engineer</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">33</th>
-<td>208173</td>
-<td>2026-07-23</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["greenhouse"]</td>
-<td>http://www.hioscar.com/careers/8080964?gh_jid=...</td>
-<td>["http://www.hioscar.com/careers/8080964?gh_ji...</td>
-<td>[{"source": "jobhive", "source_platform": "gre...</td>
-<td>Manager, Network Contracting (Georgia)</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">34</th>
-<td>208174</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["workday"]</td>
-<td>https://livenation.wd503.myworkdayjobs.com/lne...</td>
-<td>["https://livenation.wd503.myworkdayjobs.com/l...</td>
-<td>[{"source": "jobhive", "source_platform": "wor...</td>
-<td>Security - Venue Staff</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">35</th>
-<td>208175</td>
-<td>2026-06-25</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["greenhouse"]</td>
-<td>https://job-boards.greenhouse.io/bestversionme...</td>
-<td>["https://job-boards.greenhouse.io/bestversion...</td>
-<td>[{"source": "jobhive", "source_platform": "gre...</td>
-<td>Sales Representative</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">36</th>
-<td>208176</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["successfactors"]</td>
-<td>https://jobsearch.grifols.com/job/MO-St_-Louis...</td>
-<td>["https://jobsearch.grifols.com/job/MO-St_-Lou...</td>
-<td>[{"source": "jobhive", "source_platform": "suc...</td>
-<td>Field Service Engineer - St. Louis, MO</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">37</th>
-<td>208177</td>
-<td>2026-06-05</td>
-<td>2026-06-18</td>
-<td>13</td>
-<td>["fantastic_jobs"]</td>
-<td>["fantastic_jobs"]</td>
-<td>https://jobs.dayforcehcm.com/en-US/prwt/USFCar...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>Proposal Manager</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">38</th>
-<td>208178</td>
-<td>2026-06-10</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["amazon"]</td>
-<td>https://account.amazon.jobs/jobs/10444537/apply</td>
-<td>["https://account.amazon.jobs/jobs/10444537/ap...</td>
-<td>[{"source": "jobhive", "source_platform": "ama...</td>
-<td>Data Center Technician</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">39</th>
-<td>208179</td>
-<td>2026-06-05</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["fantastic_jobs"]</td>
-<td>["fantastic_jobs"]</td>
-<td>https://jobs.jobvite.com/martinmarietta/job/oU...</td>
-<td>["https://jobs.jobvite.com/martinmarietta/job/...</td>
-<td>[{"source": "fantastic_jobs", "source_platform...</td>
-<td>Plant Maintenance</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">40</th>
-<td>208180</td>
-<td>2026-07-21</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["oracle"]</td>
-<td>https://ebwv.fa.us2.oraclecloud.com/?keyword=&amp;...</td>
-<td>["https://ebwv.fa.us2.oraclecloud.com/?keyword...</td>
-<td>[{"source": "jobhive", "source_platform": "ora...</td>
-<td>Engineer - Homestead TownePlace Suites</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">41</th>
-<td>208181</td>
-<td>2024-06-28</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["icims"]</td>
-<td>https://careers-hcsgcorp.icims.com/jobs/704370...</td>
-<td>["https://careers-hcsgcorp.icims.com/jobs/7043...</td>
-<td>[{"source": "jobhive", "source_platform": "ici...</td>
-<td>Cook</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">42</th>
-<td>208182</td>
-<td>2026-04-30</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/Dominos/74400...</td>
-<td>["https://jobs.smartrecruiters.com/Dominos/744...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Delivery Driver (1136) - 21697 21 Mile Rd</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">43</th>
-<td>208183</td>
-<td>2026-06-08</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/JackLinksProt...</td>
-<td>["https://jobs.smartrecruiters.com/JackLinksPr...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Operational Excellence (OPEX) Manager</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">44</th>
-<td>208184</td>
-<td>2026-07-21</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/Dominos/74400...</td>
-<td>["https://jobs.smartrecruiters.com/Dominos/744...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Assistant Manager(05508)</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">45</th>
-<td>208185</td>
-<td>2026-06-03</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["phenom"]</td>
-<td>https://careers.pnc.com/job/R202585</td>
-<td>["https://careers.pnc.com/job/R202585"]</td>
-<td>[{"source": "jobhive", "source_platform": "phe...</td>
-<td>Senior Counsel - AML</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">46</th>
-<td>208186</td>
-<td>2026-06-05</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["datablist"]</td>
-<td>["datablist"]</td>
-<td>https://fa-eups-saasfaprod1.fa.ocs.oraclecloud...</td>
-<td>["https://fa-eups-saasfaprod1.fa.ocs.oracleclo...</td>
-<td>[{"source": "datablist", "source_platform": "d...</td>
-<td>Data Insights &amp; Analytics Manager</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">47</th>
-<td>208187</td>
-<td>2026-06-25</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["oracle"]</td>
-<td>https://hdox.fa.us6.oraclecloud.com/?keyword=&amp;...</td>
-<td>["https://hdox.fa.us6.oraclecloud.com/?keyword...</td>
-<td>[{"source": "jobhive", "source_platform": "ora...</td>
-<td>Supply Replenisher Associate I</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">48</th>
-<td>208188</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["workday"]</td>
-<td>https://montage.wd1.myworkdayjobs.com/montage_...</td>
-<td>["https://montage.wd1.myworkdayjobs.com/montag...</td>
-<td>[{"source": "jobhive", "source_platform": "wor...</td>
-<td>Cluster Director, Learning and Development</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">49</th>
-<td>208189</td>
-<td>2026-06-04</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["smartrecruiters"]</td>
-<td>https://jobs.smartrecruiters.com/CityofPhilade...</td>
-<td>["https://jobs.smartrecruiters.com/CityofPhila...</td>
-<td>[{"source": "jobhive", "source_platform": "sma...</td>
-<td>Fiscal and Grants Analyst</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>["High school diploma or equivalent"]</td>
 </tr>
 </tbody>
 </table>
 
-<p>50 rows × 134 columns</p>
+<p>5 rows × 136 columns</p>
 </div>
 </div>
 </div>
