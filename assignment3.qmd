@@ -3,7 +3,7 @@ title: "Week 3"
 format: html
 jupyter: python3
 execute:
-  freeze: auto 
+  freeze: true 
 ---
 
 ```{python}
@@ -56,10 +56,12 @@ df = spark.read.parquet(*[path.as_uri() for path in sorted(data_dir.glob("*.parq
 df.createOrReplaceTempView("job_postings")
 
 # Show Schema and Sample Data
-print("---This is Diagnostic check, No need to print it in the final doc---")
+#print("---This is Diagnostic check, No need to print it in the final doc---")
+#df.printSchema() # comment this line when rendering the submission
 
-df.printSchema() # comment this line when rendering the submission
 df.show(5)
+spark.sql("SELECT * FROM job_postings LIMIT 50").toPandas()
+
 
 ```
 
