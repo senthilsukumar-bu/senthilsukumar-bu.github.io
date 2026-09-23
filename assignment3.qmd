@@ -262,7 +262,7 @@ fig.update_layout(
     margin=dict(t=60, b=200, l=90, r=120),
 )
 
-print("Project Management Specialists and Database Architects dominate in job posting volume, which suggests these roles are the most actively recruited across the dataset. Despite variation in demand, median salaries are tightly clustered.")
+print("Project Management Specialists and Database Architects dominate in job posting volume, which suggests these roles are the most in-demand. Despite variation in demand, median salaries are tightly clustered.")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
@@ -371,7 +371,7 @@ fig.update_layout(
     margin=dict(t=60, b=80, l=100, r=20),
 )
 
-print("...")
+print("Salary generally increases with required years of experience across all education groups, but the steepest gains are concentrated in Master's and PhD/Doctorate roles. At these education levels, compensation diverges significantly from Associate-level roles in the early (<5) years.")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
@@ -460,7 +460,7 @@ fig.update_layout(
     margin=dict(t=60, b=80, l=100, r=20),
 )
 
-print("Remote roles command a consistent salary premium over on-site positions across all experience levels, with the gap widening noticeably beyond 3 years.")
+print("Remote roles consistently command a salary premium over on-site positions across all experience levels, with the gap widening noticeably beyond 3 years.")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
