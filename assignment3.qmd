@@ -22,9 +22,10 @@ from pyspark.sql.functions import col, monotonically_increasing_id
 np.random.seed(42)
 
 import plotly.io as pio
-pio.renderers.default = "plotly_mimetype"
+pio.renderers.default = "notebook"
+#pio.renderers.default = "plotly_mimetype"
 
-pio.renderers.default = "plotly_mimetype"
+from IPython.display import display, HTML
 
 # Initialize Spark Session
 spark = SparkSession.builder.appName("CareerCompassData").getOrCreate()
@@ -176,7 +177,8 @@ fig.update_layout(
     margin=dict(t=60, b=260, l=90, r=20),
 )
 
-fig.show(renderer="plotly_mimetype")
+#fig.show(renderer="plotly_mimetype")
+display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
 
