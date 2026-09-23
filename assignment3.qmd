@@ -59,7 +59,7 @@ df.createOrReplaceTempView("job_postings")
 #df.printSchema() # comment this line when rendering the submission
 
 #df.show(5)
-spark.sql("SELECT * FROM job_postings LIMIT 5").toPandas()
+#spark.sql("SELECT * FROM job_postings LIMIT 5").toPandas()
 
 
 #Use SALARY directly if it's a valid non-zero number
@@ -67,8 +67,19 @@ spark.sql("SELECT * FROM job_postings LIMIT 5").toPandas()
 #Default to whichever single field is available
 #Default to NULL if all three are missing/empty/zero
 cleaned_df = spark.sql("""
-    SELECT
-        *,
+    with base as (
+    SELECT DISTINCT
+        --*,
+        ID,
+        NAICS2_NAME,
+        EMPLOYMENT_TYPE_NAME,
+        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[\\n\\r]', ' ') AS EDUCATION_LEVELS_NAME_CLEAN,
+        REMOTE_TYPE_NAME,
+        MAX_YEARS_EXPERIENCE,
+        ONET_NAME,
+        SALARY_FROM,
+        SALARY_TO,
+        SALARY,
         CASE
             WHEN SALARY IS NOT NULL
                  AND SALARY != ''
@@ -82,9 +93,10 @@ cleaned_df = spark.sql("""
             WHEN TRY_CAST(SALARY_TO AS DOUBLE) > 0
                 THEN TRY_CAST(SALARY_TO AS DOUBLE)
             ELSE NULL
-        END AS SALARY_IMPUTED,
-        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[\\n\\r]', ' ') AS EDUCATION_LEVELS_CLEAN
+        END AS SALARY_IMPUTED
     FROM job_postings
+    ) 
+    select * from base where SALARY_IMPUTED > 0
 """)
 
 cleaned_df.createOrReplaceTempView("job_postings_clean")
