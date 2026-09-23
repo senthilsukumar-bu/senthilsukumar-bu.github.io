@@ -150,7 +150,6 @@ spark.sql("SELECT * FROM job_postings_clean LIMIT 5").toPandas()
 
 
 # Salary Distribution by Industry and Employment Type
-## TBD
 ```{python}
 
 salary_pd = spark.sql("""
@@ -194,6 +193,7 @@ fig.update_layout(
     margin=dict(t=60, b=260, l=90, r=20),
 )
 
+## The median salary for most industries falls within the USD 100,000 to 200,000 range.
 #fig.show(renderer="plotly_mimetype")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
@@ -204,6 +204,66 @@ display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 ## TBD
 ```{python}
 
+onet_pd = spark.sql("""
+    SELECT
+        ONET_NAME AS Occupation_Name,
+        PERCENTILE(SALARY_IMPUTED_ANNUAL, 0.5) AS Median_Salary,
+        COUNT(DISTINCT ID) AS Job_Postings
+    FROM job_postings_clean
+    WHERE SALARY_IMPUTED_ANNUAL IS NOT NULL
+      AND SALARY_IMPUTED_ANNUAL > 1000
+      AND ONET_NAME IS NOT NULL
+    GROUP BY ONET_NAME
+    ORDER BY Job_Postings DESC
+""").toPandas()
+
+fig = px.scatter(
+    onet_pd,
+    x="Occupation_Name",
+    y="Median_Salary",
+    size="Job_Postings",
+    color="Job_Postings",
+    color_continuous_scale="Viridis",
+    title="Median Salary by ONET Occupation",
+    labels={
+        "Occupation_Name": "ONET Occupation",
+        "Median_Salary": "Median Salary",
+        "Job_Postings": "Number of Met Career Compass records",
+    },
+    size_max=80,
+)
+
+fig.update_layout(
+    height=600,
+    font=dict(family="system-ui, -apple-system, 'Segoe UI', sans-serif", size=12),
+    title_font=dict(size=15, color="#0b0b0b"),
+    plot_bgcolor="#fcfcfb",
+    paper_bgcolor="#fcfcfb",
+    xaxis=dict(
+        title="ONET Occupation",
+        tickangle=-40,
+        tickfont=dict(size=10, color="#52514e"),
+        showgrid=False,
+        linecolor="#c3c2b7",
+    ),
+    yaxis=dict(
+        title="Median Salary",
+        tickformat="$,.0f",
+        tickfont=dict(size=11),
+        gridcolor="#e1e0d9",
+        linecolor="#c3c2b7",
+        zeroline=False,
+    ),
+    coloraxis_colorbar=dict(
+        title="Number of Met Career<br>Compass records",
+        tickformat=",",
+        thickness=15,
+        len=0.75,
+    ),
+    margin=dict(t=60, b=200, l=90, r=120),
+)
+
+display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
 
