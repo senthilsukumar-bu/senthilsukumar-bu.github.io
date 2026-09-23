@@ -193,7 +193,7 @@ fig.update_layout(
     margin=dict(t=60, b=260, l=90, r=20),
 )
 
-## The median salary for most industries falls within the USD 100,000 to 200,000 range.
+print("The median salary for most industries falls within the USD 100,000 to 200,000 range. Full and part time salaries across multiple industries can exceed USD 300,000.")
 #fig.show(renderer="plotly_mimetype")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
@@ -201,7 +201,6 @@ display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 
 #  Salary Analysis by ONET Occupation Type (Bubble Chart)
-## TBD
 ```{python}
 
 onet_pd = spark.sql("""
@@ -263,14 +262,185 @@ fig.update_layout(
     margin=dict(t=60, b=200, l=90, r=120),
 )
 
+print("Project Management Specialists and Database Architects dominate in job posting volume, which suggests these roles are the most actively recruited across the dataset. Despite variation in demand, median salaries are tightly clustered.")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
 
 
 #  Salary by Education Level
-## TBD
 ```{python}
+exp_edu_df = spark.sql("""
+    SELECT
+        CASE
+            WHEN LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%ged%'
+              OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%high school%'
+              OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%associate%'
+              OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%postsecondary%'
+              OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%no education%'
+              OR TRIM(COALESCE(EDUCATION_LEVELS_NAME_CLEAN, '')) = ''
+                THEN 'Associate''s or Lower'
+            WHEN LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%bachelor%'
+                THEN 'Bachelor''s'
+            WHEN LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%master%'
+                THEN 'Master''s'
+            WHEN LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%doctor%'
+              OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%phd%'
+              OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%professional degree%'
+                THEN 'PhD / Doctorate'
+            ELSE 'Associate''s or Lower'
+        END AS EDU_GROUP,
+        TRY_CAST(MAX_YEARS_EXPERIENCE AS DOUBLE)  AS MAX_EXPERIENCE,
+        ONET_NAME AS OCCUPATION_NAME,
+        ROUND(AVG(SALARY_IMPUTED_ANNUAL), 0) AS AVERAGE_SALARY
+    FROM job_postings_clean
+    WHERE SALARY_IMPUTED_ANNUAL IS NOT NULL
+      AND SALARY_IMPUTED_ANNUAL > 1000
+      AND MAX_YEARS_EXPERIENCE IS NOT NULL
+      AND TRIM(CAST(MAX_YEARS_EXPERIENCE AS STRING)) != ''
+    GROUP BY EDU_GROUP, MAX_EXPERIENCE, OCCUPATION_NAME
+    ORDER BY MAX_EXPERIENCE
+""").toPandas()
 
+# Remove 99th pct  outliers
+p99 = exp_edu_df["AVERAGE_SALARY"].quantile(0.99)
+exp_edu_df = exp_edu_df[exp_edu_df["AVERAGE_SALARY"] <= p99]
+
+# Add jitter to X-axis so overlapping points are readable
+np.random.seed(42)
+exp_edu_df["MAX_EXPERIENCE_JITTER"] = (
+    exp_edu_df["MAX_EXPERIENCE"] + np.random.uniform(-0.25, 0.25, len(exp_edu_df))
+)
+
+EDU_ORDER = ["Associate's or Lower", "Bachelor's", "Master's", "PhD / Doctorate"]
+EDU_COLOR = {
+    "Associate's or Lower": "#2a78d6",   # slot 1 – blue
+    "Bachelor's":           "#eb6834",   # slot 2 – orange
+    "Master's":             "#1baf7a",   # slot 3 – aqua
+    "PhD / Doctorate":      "#eda100",   # slot 4 – yellow
+}
+
+fig.update_traces(marker=dict(size=8, line=dict(width=0.5, color="rgba(0,0,0,0.15)")))
+
+fig.update_layout(
+    height=550,
+    font=dict(family="system-ui, -apple-system, 'Segoe UI', sans-serif", size=12),
+    title_font=dict(size=15, color="#1a2744"),
+    plot_bgcolor="#fffbee",      # warm cream matching reference
+    paper_bgcolor="#fffbee",
+    xaxis=dict(
+        title="Years of Experience",
+        tickfont=dict(size=11, color="#52514e"),
+        title_font=dict(size=12, color="#52514e"),
+        showgrid=True, gridcolor="#d8d0b8", griddash="dash",
+        linecolor="#c3c2b7", zeroline=False,
+    ),
+    yaxis=dict(
+        title="Average Salary (USD)",
+        tickformat="$,.0f",
+        tickfont=dict(size=11, color="#52514e"),
+        title_font=dict(size=12, color="#52514e"),
+        showgrid=True, gridcolor="#d8d0b8", griddash="dash",
+        linecolor="#c3c2b7", zeroline=False,
+    ),
+    legend=dict(
+        title_text="Education Level",
+        font=dict(size=11),
+        bordercolor="#d8d0b8", borderwidth=1,
+    ),
+    margin=dict(t=60, b=80, l=100, r=20),
+)
+
+print("")
+display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
+
+
+```
+
+
+#  Salary by Remote Work Type
+```{python}
+remote_df = spark.sql("""
+    SELECT
+        COALESCE(NULLIF(TRIM(REMOTE_TYPE_NAME), ''), 'Unknown') AS REMOTE_TYPE,
+        TRY_CAST(MAX_YEARS_EXPERIENCE AS DOUBLE)                AS MAX_EXPERIENCE,
+        ONET_NAME                                               AS OCCUPATION_NAME,
+        ROUND(AVG(SALARY_IMPUTED_ANNUAL), 0)                    AS AVERAGE_SALARY
+    FROM job_postings_clean
+    WHERE SALARY_IMPUTED_ANNUAL IS NOT NULL
+      AND SALARY_IMPUTED_ANNUAL > 1000
+      AND MAX_YEARS_EXPERIENCE IS NOT NULL
+      AND TRIM(CAST(MAX_YEARS_EXPERIENCE AS STRING)) != ''
+    GROUP BY REMOTE_TYPE, MAX_EXPERIENCE, OCCUPATION_NAME
+    ORDER BY MAX_EXPERIENCE
+""").toPandas()
+
+# Remove 99th pct outliers
+p99 = remote_df["AVERAGE_SALARY"].quantile(0.99)
+remote_df = remote_df[remote_df["AVERAGE_SALARY"] <= p99]
+
+# Add jitter to X-axis
+np.random.seed(42)
+remote_df["MAX_EXPERIENCE_JITTER"] = (
+    remote_df["MAX_EXPERIENCE"] + np.random.uniform(-0.25, 0.25, len(remote_df))
+)
+
+# Lock color for labels
+remote_types = sorted(remote_df["REMOTE_TYPE"].unique())
+palette = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#898781"]
+REMOTE_COLOR = {t: palette[i % len(palette)] for i, t in enumerate(remote_types)}
+
+fig = px.scatter(
+    remote_df,
+    x="MAX_EXPERIENCE_JITTER",
+    y="AVERAGE_SALARY",
+    color="REMOTE_TYPE",
+    color_discrete_map=REMOTE_COLOR,
+    category_orders={"REMOTE_TYPE": remote_types},
+    hover_name="OCCUPATION_NAME",
+    hover_data={"MAX_EXPERIENCE_JITTER": False, "MAX_EXPERIENCE": True,
+                "AVERAGE_SALARY": ":$,.0f", "REMOTE_TYPE": False},
+    title="Experience vs Salary by Remote Work Type",
+    labels={
+        "MAX_EXPERIENCE_JITTER": "Years of Experience",
+        "AVERAGE_SALARY":        "Average Salary (USD)",
+        "REMOTE_TYPE":           "Remote Work Type",
+        "MAX_EXPERIENCE":        "Years of Experience",
+    },
+    opacity=0.72,
+)
+
+fig.update_traces(marker=dict(size=8, line=dict(width=0.5, color="rgba(0,0,0,0.15)")))
+
+fig.update_layout(
+    height=550,
+    font=dict(family="system-ui, -apple-system, 'Segoe UI', sans-serif", size=12),
+    title_font=dict(size=15, color="#1a2744"),
+    plot_bgcolor="#fffbee",
+    paper_bgcolor="#fffbee",
+    xaxis=dict(
+        title="Years of Experience",
+        tickfont=dict(size=11, color="#52514e"),
+        title_font=dict(size=12, color="#52514e"),
+        showgrid=True, gridcolor="#d8d0b8", griddash="dash",
+        linecolor="#c3c2b7", zeroline=False,
+    ),
+    yaxis=dict(
+        title="Average Salary (USD)",
+        tickformat="$,.0f",
+        tickfont=dict(size=11, color="#52514e"),
+        title_font=dict(size=12, color="#52514e"),
+        showgrid=True, gridcolor="#d8d0b8", griddash="dash",
+        linecolor="#c3c2b7", zeroline=False,
+    ),
+    legend=dict(
+        title_text="Remote Work Type",
+        font=dict(size=11),
+        bordercolor="#d8d0b8", borderwidth=1,
+    ),
+    margin=dict(t=60, b=80, l=100, r=20),
+)
+
+display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
