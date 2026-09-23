@@ -72,7 +72,12 @@ cleaned_df = spark.sql("""
         SELECT DISTINCT
             ID,
             NAICS2_NAME,
-            EMPLOYMENT_TYPE_NAME,
+            CASE 
+              WHEN lower(trim(EMPLOYMENT_TYPE_NAME)) like '%temp%' OR lower(trim(EMPLOYMENT_TYPE_NAME)) = '%temporary%' THEN 'Temporary'
+              WHEN lower(trim(EMPLOYMENT_TYPE_NAME)) like '%part%' OR lower(trim(EMPLOYMENT_TYPE_NAME)) in ('Part-time', 'PART_TIME', 'Part Time') THEN 'Part-Time'
+              WHEN lower(trim(EMPLOYMENT_TYPE_NAME)) like '%full%' OR lower(trim(EMPLOYMENT_TYPE_NAME)) in ('Full-time', 'full_time', 'Full-Time') THEN 'Full-Time'
+              ELSE 'Other'
+            end as EMPLOYMENT_TYPE_NAME_CLEAN,
             REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[\\n\\r]', ' ') AS EDUCATION_LEVELS_NAME_CLEAN,
             REMOTE_TYPE_NAME,
             MAX_YEARS_EXPERIENCE,
@@ -96,11 +101,12 @@ cleaned_df = spark.sql("""
             END AS SALARY_IMPUTED
         FROM job_postings
     ),
+    -- Flatten rows where data is enum (Education, Employment Type)
     expanded AS (
         SELECT
             b.ID,
             b.NAICS2_NAME,
-            TRIM(emp_type) AS EMPLOYMENT_TYPE_NAME,
+            TRIM(emp_type) AS EMPLOYMENT_TYPE_NAME_CLEAN,
             TRIM(edu_level) AS EDUCATION_LEVELS_NAME_CLEAN,
             b.REMOTE_TYPE_NAME,
             b.MAX_YEARS_EXPERIENCE,
@@ -111,7 +117,7 @@ cleaned_df = spark.sql("""
             b.SALARY_IMPUTED
         FROM base b
         -- flatten comma-separated employment types into individual rows
-        LATERAL VIEW OUTER EXPLODE(SPLIT(b.EMPLOYMENT_TYPE_NAME, ',')) e AS emp_type
+        LATERAL VIEW OUTER EXPLODE(SPLIT(b.EMPLOYMENT_TYPE_NAME_CLEAN, ',')) e AS emp_type
         -- flatten JSON array of education levels into individual rows
         LATERAL VIEW OUTER EXPLODE(FROM_JSON(
             b.EDUCATION_LEVELS_NAME_CLEAN, 'ARRAY<STRING>'
@@ -125,7 +131,7 @@ cleaned_df = spark.sql("""
         CASE
             WHEN SALARY_IMPUTED < 1000 THEN ROUND(SALARY_IMPUTED * 2080, 0)
             ELSE SALARY_IMPUTED
-        END AS SALARY_ANNUAL
+        END AS SALARY_IMPUTED_ANNUAL
     FROM expanded
 """)
 
@@ -141,6 +147,33 @@ spark.sql("SELECT * FROM job_postings_clean LIMIT 5").toPandas()
 ## TBD
 ```{python}
 
+fig = px.box(
+    cleaned_df,
+    x="NAICS2_NAME",
+    y="SALARY_IMPUTED_ANNUAL",
+    color="EMPLOYMENT_TYPE_NAME_CLEAN",
+    title="Salary Distribution by Industry and Employment Type",
+    labels={
+        "NAICS2_NAME": "Industry (NAICS2)",
+        "SALARY_IMPUTED_ANNUAL": "Starting Salary (USD)",
+        "EMPLOYMENT_TYPE_NAME_CLEAN": "Employment Type",
+    },
+    points=False,
+)
+
+fig.update_layout(
+    height=600,
+    font=dict(family="system-ui, -apple-system, 'Segoe UI', sans-serif", size=12),
+    title_font=dict(size=15, color="#0b0b0b"),
+    plot_bgcolor="#fcfcfb",
+    paper_bgcolor="#fcfcfb",
+    xaxis=dict(tickangle=-40, tickfont=dict(size=9, color="#52514e"), showgrid=False, linecolor="#c3c2b7"),
+    yaxis=dict(tickformat="$,.0f", gridcolor="#e1e0d9", linecolor="#c3c2b7", zeroline=False),
+    legend=dict(title_text="Employment Type", orientation="h", y=-0.55, x=0, font=dict(size=10)),
+    margin=dict(t=60, b=260, l=90, r=20),
+)
+
+fig.show()
 
 ```
 
