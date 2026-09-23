@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-3e9b1289f5f353c49b617ce48ad2bc38.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-55617497126496852ff9f5a59253c640.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -189,7 +189,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="a3949b27" class="cell" data-execution_count="1">
+<div id="32eb9c9e" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.io <span class="im">as</span> pio</span>
@@ -242,7 +242,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co">#df.printSchema() # comment this line when rendering the submission</span></span>
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="co">#df.show(5)</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings LIMIT 5"</span>).toPandas()</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="co">#spark.sql("SELECT * FROM job_postings LIMIT 5").toPandas()</span></span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="co">#Use SALARY directly if it's a valid non-zero number</span></span>
@@ -250,29 +250,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="co">#Default to whichever single field is available</span></span>
 <span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="co">#Default to NULL if all three are missing/empty/zero</span></span>
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>cleaned_df <span class="op">=</span> spark.sql(<span class="st">"""</span></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="st">        *,</span></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="st">        CASE</span></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN SALARY IS NOT NULL</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND SALARY != ''</span></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND TRY_CAST(SALARY AS DOUBLE) &gt; 0</span></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY AS DOUBLE)</span></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) &gt; 0</span></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND TRY_CAST(SALARY_TO AS DOUBLE) &gt; 0</span></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN (TRY_CAST(SALARY_FROM AS DOUBLE) + TRY_CAST(SALARY_TO AS DOUBLE)) / 2.0</span></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) &gt; 0</span></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY_FROM AS DOUBLE)</span></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_TO AS DOUBLE) &gt; 0</span></span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY_TO AS DOUBLE)</span></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="st">            ELSE NULL</span></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="st">        END AS SALARY_IMPUTED,</span></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="st">        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[</span><span class="ch">\\</span><span class="st">n</span><span class="ch">\\</span><span class="st">r]', ' ') AS EDUCATION_LEVELS_CLEAN</span></span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM job_postings</span></span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>cleaned_df.createOrReplaceTempView(<span class="st">"job_postings_clean"</span>)</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings_clean LIMIT 5"</span>).toPandas()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="st">    with base as (</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT DISTINCT</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="st">        --*,</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="st">        ID,</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="st">        NAICS2_NAME,</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="st">        EMPLOYMENT_TYPE_NAME,</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="st">        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[</span><span class="ch">\\</span><span class="st">n</span><span class="ch">\\</span><span class="st">r]', ' ') AS EDUCATION_LEVELS_NAME_CLEAN,</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="st">        REMOTE_TYPE_NAME,</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="st">        MAX_YEARS_EXPERIENCE,</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="st">        ONET_NAME,</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="st">        SALARY_FROM,</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="st">        SALARY_TO,</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="st">        SALARY,</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="st">        CASE</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN SALARY IS NOT NULL</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND SALARY != ''</span></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND TRY_CAST(SALARY AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY AS DOUBLE)</span></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="st">                 AND TRY_CAST(SALARY_TO AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN (TRY_CAST(SALARY_FROM AS DOUBLE) + TRY_CAST(SALARY_TO AS DOUBLE)) / 2.0</span></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY_FROM AS DOUBLE)</span></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="st">            WHEN TRY_CAST(SALARY_TO AS DOUBLE) &gt; 0</span></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="st">                THEN TRY_CAST(SALARY_TO AS DOUBLE)</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="st">            ELSE NULL</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="st">        END AS SALARY_IMPUTED</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM job_postings</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="st">    ) </span></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="st">    select * from base where SALARY_IMPUTED &gt; 0</span></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>cleaned_df.createOrReplaceTempView(<span class="st">"job_postings_clean"</span>)</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings_clean LIMIT 5"</span>).toPandas()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>WARNING: Using incubator modules: jdk.incubator.vector
 WARNING: package sun.security.action not in java.base
@@ -281,12 +293,12 @@ Setting default log level to "WARN".
 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
-26/09/23 06:18:14 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+26/09/23 06:34:24 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 
 [Stage 0:&gt;                                                          (0 + 1) / 1]
 
                                                                                 
-26/09/23 06:18:24 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+26/09/23 06:34:34 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
@@ -298,19 +310,7 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 
 [Stage 1:=======================================&gt;                   (4 + 2) / 6]
 
-[Stage 1:=================================================&gt;         (5 + 1) / 6]
-
-                                                                                
-/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
-  require_minimum_pandas_version()
-
-[Stage 3:&gt;                                                          (0 + 2) / 6]
-
-[Stage 3:===================&gt;                                       (2 + 2) / 6]
-
-[Stage 3:=============================&gt;                             (3 + 2) / 6]
-
-[Stage 3:=======================================&gt;                   (4 + 2) / 6]
+[Stage 3:&gt;                                                          (0 + 2) / 2]
 
                                                                                 </code></pre>
 </div>
@@ -323,153 +323,92 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">ID</th>
-<th data-quarto-table-cell-role="th">POSTED</th>
-<th data-quarto-table-cell-role="th">EXPIRED</th>
-<th data-quarto-table-cell-role="th">DURATION</th>
-<th data-quarto-table-cell-role="th">SOURCE_TYPES</th>
-<th data-quarto-table-cell-role="th">SOURCES</th>
-<th data-quarto-table-cell-role="th">URL</th>
-<th data-quarto-table-cell-role="th">ACTIVE_URLS</th>
-<th data-quarto-table-cell-role="th">ACTIVE_SOURCES_INFO</th>
-<th data-quarto-table-cell-role="th">TITLE_RAW</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">WRDS_NAICS</th>
-<th data-quarto-table-cell-role="th">WRDS_NAICS_2022</th>
-<th data-quarto-table-cell-role="th">WRDS_NAICS_2022_NAME</th>
-<th data-quarto-table-cell-role="th">WRDS_SIC</th>
-<th data-quarto-table-cell-role="th">WRDS_SIC_NAME</th>
-<th data-quarto-table-cell-role="th">WRDS_AS_OF</th>
-<th data-quarto-table-cell-role="th">WRDS_MATCH_BASIS</th>
-<th data-quarto-table-cell-role="th">NAICS_REVIEW_STATUS</th>
+<th data-quarto-table-cell-role="th">NAICS2_NAME</th>
+<th data-quarto-table-cell-role="th">EMPLOYMENT_TYPE_NAME</th>
+<th data-quarto-table-cell-role="th">EDUCATION_LEVELS_NAME_CLEAN</th>
+<th data-quarto-table-cell-role="th">REMOTE_TYPE_NAME</th>
+<th data-quarto-table-cell-role="th">MAX_YEARS_EXPERIENCE</th>
+<th data-quarto-table-cell-role="th">ONET_NAME</th>
+<th data-quarto-table-cell-role="th">SALARY_FROM</th>
+<th data-quarto-table-cell-role="th">SALARY_TO</th>
+<th data-quarto-table-cell-role="th">SALARY</th>
 <th data-quarto-table-cell-role="th">SALARY_IMPUTED</th>
-<th data-quarto-table-cell-role="th">EDUCATION_LEVELS_CLEAN</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>208140</td>
-<td>2026-06-05</td>
-<td>2026-06-11</td>
-<td>6</td>
-<td>["fantastic_jobs"]</td>
-<td>["fantastic_jobs"]</td>
-<td>https://www.paycomonline.net/v4/ats/web.php/po...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>Transportation Data Analyst - Monterey Park, CA</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>100000.0</td>
-<td>["Bachelor's degree", "Master's degree"]</td>
+<td>214963</td>
+<td>Health Care and Social Assistance</td>
+<td>Full-time, Contract</td>
+<td>["High school diploma or equivalent"]</td>
+<td>Hybrid</td>
+<td>1</td>
+<td>Software Developers</td>
+<td>176600</td>
+<td>294300</td>
+<td>USD 176600 - 294300 per YEAR</td>
+<td>235450.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>208141</td>
-<td>2024-09-11</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["oracle"]</td>
-<td>https://ejrz.fa.us2.oraclecloud.com/?keyword=&amp;...</td>
-<td>["https://ejrz.fa.us2.oraclecloud.com/?keyword...</td>
-<td>[{"source": "jobhive", "source_platform": "ora...</td>
-<td>Admissions Registered Nurse (Rehires)</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>220464</td>
+<td>Retail Trade</td>
+<td>Full-time, Part-time</td>
 <td>["High school diploma or equivalent"]</td>
+<td>Onsite</td>
+<td>1</td>
+<td>Project Management Specialists</td>
+<td>14</td>
+<td>18</td>
+<td>USD 14 - 18 per HOUR</td>
+<td>16.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>208142</td>
-<td>2026-03-17</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["amazon"]</td>
-<td>https://account.amazon.com/jobs/3207290/apply</td>
-<td>["https://account.amazon.com/jobs/3207290/apply"]</td>
-<td>[{"source": "jobhive", "source_platform": "ama...</td>
-<td>Risk Manager, Selling Partner Services</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>229365</td>
+<td>Educational Services</td>
+<td>Contract</td>
 <td>["High school diploma or equivalent"]</td>
+<td>Remote</td>
+<td>1</td>
+<td>Actors</td>
+<td>10</td>
+<td>15</td>
+<td>USD 10 - 15 Hourly</td>
+<td>12.5</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>208143</td>
-<td>2026-07-20</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["rareroles"]</td>
-<td>["rareroles"]</td>
-<td>https://boards.greenhouse.io/accenturefederals...</td>
-<td>["https://boards.greenhouse.io/accenturefedera...</td>
-<td>[{"source": "rareroles", "source_platform": "r...</td>
-<td>ServiceNow Sr. Developer (SPM)</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>162700.0</td>
+<td>236485</td>
+<td>Construction</td>
+<td>Full-time, Temporary, Per diem</td>
 <td>["High school diploma or equivalent"]</td>
+<td>Onsite</td>
+<td>1</td>
+<td>Electricians</td>
+<td>30</td>
+<td>38</td>
+<td>USD 30 - 38 per HOUR</td>
+<td>34.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>208144</td>
-<td>2024-07-22</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>["jobhive"]</td>
-<td>["icims"]</td>
-<td>https://careers-sparinc.icims.com/jobs/143162/...</td>
-<td>["https://careers-sparinc.icims.com/jobs/14316...</td>
-<td>[{"source": "jobhive", "source_platform": "ici...</td>
-<td>Traveling Retail Remodel Senior Lead</td>
-<td>...</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>270677</td>
+<td>Information</td>
+<td>Full-time</td>
 <td>["High school diploma or equivalent"]</td>
+<td>Onsite</td>
+<td>1</td>
+<td>Database Architects</td>
+<td>200000</td>
+<td>300000</td>
+<td>$200,000 - $300,000/year ; $200K - $300K</td>
+<td>250000.0</td>
 </tr>
 </tbody>
 </table>
 
-<p>5 rows × 136 columns</p>
 </div>
 </div>
 </div>
