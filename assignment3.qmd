@@ -21,7 +21,7 @@ from pyspark.sql.functions import col, monotonically_increasing_id
 
 np.random.seed(42)
 
-pio.renderers.default = "notebook"
+pio.renderers.default = "plotly_mimetype"
 
 # Initialize Spark Session
 spark = SparkSession.builder.appName("CareerCompassData").getOrCreate()
@@ -58,9 +58,38 @@ df.createOrReplaceTempView("job_postings")
 #print("---This is Diagnostic check, No need to print it in the final doc---")
 #df.printSchema() # comment this line when rendering the submission
 
-df.show(5)
-spark.sql("SELECT * FROM job_postings LIMIT 50").toPandas()
+#df.show(5)
+spark.sql("SELECT * FROM job_postings LIMIT 5").toPandas()
 
+
+#Use SALARY directly if it's a valid non-zero number
+#Calclate Average of SALARY_FROM + SALARY_TO if both are valid
+#Default to whichever single field is available
+#Default to NULL if all three are missing/empty/zero
+cleaned_df = spark.sql("""
+    SELECT
+        *,
+        CASE
+            WHEN SALARY IS NOT NULL
+                 AND SALARY != ''
+                 AND TRY_CAST(SALARY AS DOUBLE) > 0
+                THEN TRY_CAST(SALARY AS DOUBLE)
+            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) > 0
+                 AND TRY_CAST(SALARY_TO AS DOUBLE) > 0
+                THEN (TRY_CAST(SALARY_FROM AS DOUBLE) + TRY_CAST(SALARY_TO AS DOUBLE)) / 2.0
+            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) > 0
+                THEN TRY_CAST(SALARY_FROM AS DOUBLE)
+            WHEN TRY_CAST(SALARY_TO AS DOUBLE) > 0
+                THEN TRY_CAST(SALARY_TO AS DOUBLE)
+            ELSE NULL
+        END AS SALARY_IMPUTED,
+        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[\\n\\r]', ' ') AS EDUCATION_LEVELS_CLEAN
+    FROM job_postings
+""")
+
+cleaned_df.createOrReplaceTempView("job_postings_clean")
+
+spark.sql("SELECT * FROM job_postings_clean LIMIT 5").toPandas()
 
 ```
 
