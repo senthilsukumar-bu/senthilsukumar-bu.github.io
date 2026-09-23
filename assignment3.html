@@ -206,7 +206,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="c7e37b3f" class="cell" data-execution_count="1">
+<div id="06157662" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.io <span class="im">as</span> pio</span>
@@ -343,51 +343,40 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>cleaned_df.toPandas().to_csv(<span class="st">"salary_cleaned.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>spark.sql(<span class="st">"SELECT * FROM job_postings_clean LIMIT 5"</span>).toPandas()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>WARNING: Using incubator modules: jdk.incubator.vector
-WARNING: package sun.security.action not in java.base
-Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
-Setting default log level to "WARN".
-To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
-/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/testing/utils.py:127: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
-  require_minimum_pandas_version()
-26/09/23 07:57:22 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-
-[Stage 0:&gt;                                                          (0 + 1) / 1]
-
-                                                                                
-26/09/23 07:57:32 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
-/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
-[Stage 1:&gt;                                                          (0 + 2) / 6]
+[Stage 11:&gt;                                                         (0 + 2) / 6]
 
-[Stage 1:===================&gt;                                       (2 + 2) / 6]
+[Stage 11:=========&gt;                                                (1 + 2) / 6]
 
-[Stage 1:=============================&gt;                             (3 + 2) / 6]
+[Stage 11:===================&gt;                                      (2 + 2) / 6]
 
-[Stage 1:=======================================&gt;                   (4 + 2) / 6]
+[Stage 11:=============================&gt;                            (3 + 2) / 6]
 
-[Stage 1:=================================================&gt;         (5 + 1) / 6]
+[Stage 11:======================================&gt;                   (4 + 2) / 6]
 
-[Stage 3:&gt;                                                          (0 + 2) / 2]
+[Stage 11:================================================&gt;         (5 + 1) / 6]
+
+[Stage 13:&gt;                                                         (0 + 2) / 2]
 
                                                                                 
 /home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
-[Stage 4:&gt;                                                          (0 + 2) / 6]
+[Stage 14:&gt;                                                         (0 + 2) / 6]
 
-[Stage 4:===================&gt;                                       (2 + 2) / 6]
+[Stage 14:===================&gt;                                      (2 + 2) / 6]
 
-[Stage 4:=============================&gt;                             (3 + 2) / 6]
+[Stage 14:=============================&gt;                            (3 + 2) / 6]
 
-[Stage 4:=======================================&gt;                   (4 + 2) / 6]
+[Stage 14:======================================&gt;                   (4 + 2) / 6]
 
-[Stage 4:=================================================&gt;         (5 + 1) / 6]
+[Stage 14:================================================&gt;         (5 + 1) / 6]
 
                                                                                 </code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="1">
+<div class="cell-output cell-output-display" data-execution_count="3">
 <div>
 
 
@@ -495,7 +484,7 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 <h1>Salary Distribution by Industry and Employment Type</h1>
 <section id="tbd" class="level2">
 <h2 class="anchored" data-anchor-id="tbd">TBD</h2>
-<div id="12978726" class="cell" data-execution_count="2">
+<div id="65f81c43" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> px.box(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    cleaned_df,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">"NAICS2_NAME"</span>,</span>
@@ -527,7 +516,7 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 <pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/pandas/conversion.py:298: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
   require_minimum_pandas_version()
 
-[Stage 9:&gt;                                                          (0 + 2) / 2]
+[Stage 19:&gt;                                                         (0 + 2) / 2]
 
                                                                                 </code></pre>
 </div>
