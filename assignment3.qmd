@@ -3,7 +3,7 @@ title: "Week 3"
 format: html
 jupyter: python3
 execute:
-  freeze: true 
+  freeze: auto 
 ---
 
 ```{python}
