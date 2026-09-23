@@ -1,0 +1,13 @@
+---
+title: "Week 2 Assignment 2"
+format: html
+jupyter: python3
+execute:
+  freeze: true 
+---
+
+
+
+
+
+

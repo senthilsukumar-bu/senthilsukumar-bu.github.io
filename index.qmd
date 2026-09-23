@@ -30,7 +30,7 @@ spark = (
     .config("spark.driver.host", "localhost")
     .config("spark.driver.memory", "4g")
     .config("spark.executor.memory", "4g")
-    .config("spark.sql.shuffle.partitions", str(os.cpu_count() * 2)) 
+    .config("spark.sql.shuffle.partitions", "8")
     .getOrCreate()
 )
 spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
@@ -46,10 +46,9 @@ if USE_SAMPLE:
 df = spark.read.parquet(*[str(path) for path in parquet_files])
 df = df.toDF(*[column.lower() for column in df.columns])
 df.cache()
-df.count()
 df.createOrReplaceTempView("job_postings")
 
-from pyspark.sql.functions import col, monotonically_increasing_id, broadcast
+from pyspark.sql.functions import col, monotonically_increasing_id
 
 # Industries dimension
 industries_df = df.select(
@@ -98,14 +97,15 @@ job_postings_df = (df
         col("min_years_experience"), col("max_years_experience"),
         col("salary"), col("salary_from"), col("salary_to"),
         col("posted"), col("expired"), col("duration")
-    ).distinct().withColumn("job_postings_id", monotonically_increasing_id()))
+    )
+    .dropDuplicates(["id"])
+    .withColumn("job_postings_id", monotonically_increasing_id()))
 
 job_postings_df = job_postings_df.select(
     "job_postings_id", "id", "title_clean", "company_id", "industry_id", "location_id",
     "employment_type_name", "remote_type_name", "body", "min_years_experience",
     "max_years_experience", "salary", "salary_from", "salary_to", "posted", "expired", "duration")
 
-job_postings_df.show(5, truncate=False)
 
 #industries_df.write.mode("overwrite").csv("./output/industries.csv", header=True)
 #companies_df.write.mode("overwrite").csv("./output/companies.csv", header=True)
@@ -117,7 +117,9 @@ industries_df.createOrReplaceTempView("industries")
 companies_df.createOrReplaceTempView("companies")
 locations_df.createOrReplaceTempView("locations")
 job_postings_df.createOrReplaceTempView("job_postings")
+```
 
+```{python}
 # Test Top 5 Job Titles query
 top5_titles = spark.sql("""
     SELECT 
@@ -129,7 +131,6 @@ top5_titles = spark.sql("""
     LIMIT 5
 """)
 
-top5_titles.toPandas()
 top5_pd = top5_titles.toPandas()
 top5_pd.columns = ["Job Title", "Posting Count"]
 top5_pd = top5_pd.reset_index(drop=True)
@@ -284,7 +285,7 @@ monthly_df = spark.sql("""
     SELECT
         YEAR(to_date(jp.posted,  'yyyy-MM-dd')) AS year,
         MONTH(to_date(jp.posted, 'yyyy-MM-dd')) AS month,
-        COUNT(*) AS job_count
+        COUNT(DISTINCT jp.id) AS job_count
     FROM job_postings jp
     JOIN locations l ON jp.location_id = l.location_id
     WHERE l.state_name = 'California'
@@ -301,7 +302,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
 
-# Year as string so seaborn treats it as categorical hue (distinct colors, not gradient)
 monthly_pd["year"] = monthly_pd["year"].astype(str)
 monthly_pd = monthly_pd.sort_values(["year", "month"])
 
@@ -318,18 +318,18 @@ sns.lineplot(
     ax=ax
 )
 
-ax.set_xticks(range(1, 13))
-ax.set_xticklabels([calendar.month_abbr[m] for m in range(1, 13)], fontsize=10)
+# Use only months present in dara
+actual_months = sorted(monthly_pd["month"].unique())
+ax.set_xticks(actual_months)
+ax.set_xticklabels([calendar.month_abbr[m] for m in actual_months], fontsize=10)
 
 ax.set_title("Monthly Job Posting Trends in California", fontsize=13, pad=12)
 ax.set_xlabel("Month", fontsize=11)
 ax.set_ylabel("Number of Job Postings", fontsize=11)
-ax.legend(title="Year", title_fontsize=10, fontsize=10)
+ax.legend(title="Year", fontsize=10, title_fontsize=10)
 
-ax.yaxis.grid(True, linestyle="-", linewidth=0.5, color="#cccccc")
+ax.grid(True, linestyle="-", linewidth=0.5, color="#d0d0d0")
 ax.set_axisbelow(True)
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
 
 plt.tight_layout()
 plt.show()
@@ -341,7 +341,7 @@ plt.show()
 ```{python}
 # Query 4: Salary Comparisons Across Major US Cities
 salary_metro_df = spark.sql("""
-    SELECT
+  SELECT
         CASE l.msa
             WHEN '47900' THEN 'Washington DC'
             WHEN '41860' THEN 'San Francisco'
@@ -356,12 +356,13 @@ salary_metro_df = spark.sql("""
             WHEN '19740' THEN 'Denver'
             WHEN '28140' THEN 'Kansas City'
         END AS metro_area,
-        ROUND(AVG(TRY_CAST(jp.salary AS DOUBLE)), 2) AS avg_salary,
+        ROUND(AVG(TRY_CAST(jp.salary_from AS DOUBLE)), 2) AS avg_salary,
         COUNT(*) AS job_count
     FROM job_postings jp
     JOIN locations l ON jp.location_id = l.location_id
-    WHERE jp.salary IS NOT NULL
-      AND TRY_CAST(jp.salary AS DOUBLE) > 0
+    WHERE jp.salary_from IS NOT NULL
+    AND jp.salary_from != ''
+    AND TRY_CAST(jp.salary_from AS DOUBLE) > 0
       AND l.msa IN (
           '47900', '41860', '42660', '26420', '31080', '35620',
           '14460', '34980', '12420', '19100', '19740', '28140'
@@ -393,11 +394,9 @@ ax.set_title("Average Salary Comparisons Across Major US Metro Areas",
 ax.set_xlabel("Average Salary ($)", fontsize=11)
 ax.set_ylabel("Metro Area", fontsize=11)
 
-# Vertical dashed gridlines only — matching the chart
 ax.xaxis.grid(True, linestyle="--", linewidth=0.6, color="#cccccc")
 ax.set_axisbelow(True)
 
-# Full box border (all spines visible)
 for spine in ax.spines.values():
     spine.set_visible(True)
 
