@@ -26,6 +26,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -151,6 +186,209 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<div id="522d5d56" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.io <span class="im">as</span> pio</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.graph_objects <span class="im">as</span> go</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql.functions <span class="im">import</span> col, split, explode, regexp_replace, transform, when</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> functions <span class="im">as</span> F</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql.functions <span class="im">import</span> col, monotonically_increasing_id</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>pio.renderers.default <span class="op">=</span> <span class="st">"notebook"</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize Spark Session</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>spark <span class="op">=</span> SparkSession.builder.appName(<span class="st">"CareerCompassData"</span>).getOrCreate()</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> spark_to_pandas(sdf):</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> [row.asDict(recursive<span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> row <span class="kw">in</span> sdf.collect()]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows, columns<span class="op">=</span>sdf.columns)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>OUTPUT_DIR <span class="op">=</span> Path(<span class="st">"output"</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> export_plotly_figure(fig, name, width<span class="op">=</span><span class="dv">1000</span>, height<span class="op">=</span><span class="dv">800</span>, scale<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    OUTPUT_DIR.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    html_path <span class="op">=</span> OUTPUT_DIR <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">.html"</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    svg_path <span class="op">=</span> OUTPUT_DIR <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">.svg"</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        html <span class="op">=</span> pio.to_html(fig, full_html<span class="op">=</span><span class="va">True</span>, include_plotlyjs<span class="op">=</span><span class="st">"cdn"</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        html_path.write_text(html, encoding<span class="op">=</span><span class="st">"utf-8"</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> exc:</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"HTML export skipped for </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>exc<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        fig.write_image(<span class="bu">str</span>(svg_path.resolve()), width<span class="op">=</span>width, height<span class="op">=</span>height, scale<span class="op">=</span>scale)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> exc:</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"Static SVG export skipped for </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>exc<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Load Data (all 17 Parquet partition files)</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> Path(<span class="st">"../Jobs_2026"</span>).resolve() </span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> spark.read.parquet(<span class="op">*</span>[path.as_uri() <span class="cf">for</span> path <span class="kw">in</span> <span class="bu">sorted</span>(data_dir.glob(<span class="st">"*.parquet"</span>))])</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>df.createOrReplaceTempView(<span class="st">"job_postings"</span>)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Show Schema and Sample Data</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"---This is Diagnostic check, No need to print it in the final doc---"</span>)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>df.printSchema() <span class="co"># comment this line when rendering the submission</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>df.show(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---This is Diagnostic check, No need to print it in the final doc---
+root
+ |-- ID: long (nullable = true)
+ |-- POSTED: string (nullable = true)
+ |-- EXPIRED: string (nullable = true)
+ |-- DURATION: string (nullable = true)
+ |-- SOURCE_TYPES: string (nullable = true)
+ |-- SOURCES: string (nullable = true)
+ |-- URL: string (nullable = true)
+ |-- ACTIVE_URLS: string (nullable = true)
+ |-- ACTIVE_SOURCES_INFO: string (nullable = true)
+ |-- TITLE_RAW: string (nullable = true)
+ |-- BODY: string (nullable = true)
+ |-- COMPANY_NAME: string (nullable = true)
+ |-- COMPANY_RAW: string (nullable = true)
+ |-- COMPANY_IS_STAFFING: byte (nullable = true)
+ |-- EDUCATION_LEVELS: string (nullable = true)
+ |-- EDUCATION_LEVELS_NAME: string (nullable = true)
+ |-- MIN_EDULEVELS: string (nullable = true)
+ |-- MIN_EDULEVELS_NAME: string (nullable = true)
+ |-- MAX_EDULEVELS: string (nullable = true)
+ |-- MAX_EDULEVELS_NAME: string (nullable = true)
+ |-- EMPLOYMENT_TYPE: string (nullable = true)
+ |-- EMPLOYMENT_TYPE_NAME: string (nullable = true)
+ |-- MIN_YEARS_EXPERIENCE: string (nullable = true)
+ |-- MAX_YEARS_EXPERIENCE: string (nullable = true)
+ |-- IS_INTERNSHIP: byte (nullable = true)
+ |-- SALARY: string (nullable = true)
+ |-- REMOTE_TYPE: string (nullable = true)
+ |-- REMOTE_TYPE_NAME: string (nullable = true)
+ |-- ORIGINAL_PAY_PERIOD: string (nullable = true)
+ |-- SALARY_TO: string (nullable = true)
+ |-- SALARY_FROM: string (nullable = true)
+ |-- LOCATION: string (nullable = true)
+ |-- CITY: string (nullable = true)
+ |-- CITY_NAME: string (nullable = true)
+ |-- COUNTY: string (nullable = true)
+ |-- COUNTY_NAME: string (nullable = true)
+ |-- MSA: string (nullable = true)
+ |-- MSA_NAME: string (nullable = true)
+ |-- STATE: string (nullable = true)
+ |-- STATE_NAME: string (nullable = true)
+ |-- COUNTY_OUTGOING: string (nullable = true)
+ |-- COUNTY_NAME_OUTGOING: string (nullable = true)
+ |-- COUNTY_INCOMING: string (nullable = true)
+ |-- COUNTY_NAME_INCOMING: string (nullable = true)
+ |-- MSA_OUTGOING: string (nullable = true)
+ |-- MSA_NAME_OUTGOING: string (nullable = true)
+ |-- MSA_INCOMING: string (nullable = true)
+ |-- MSA_NAME_INCOMING: string (nullable = true)
+ |-- NAICS2: string (nullable = true)
+ |-- NAICS2_NAME: string (nullable = true)
+ |-- NAICS3: string (nullable = true)
+ |-- NAICS3_NAME: string (nullable = true)
+ |-- NAICS4: string (nullable = true)
+ |-- NAICS4_NAME: string (nullable = true)
+ |-- NAICS5: string (nullable = true)
+ |-- NAICS5_NAME: string (nullable = true)
+ |-- NAICS6: string (nullable = true)
+ |-- NAICS6_NAME: string (nullable = true)
+ |-- TITLE: string (nullable = true)
+ |-- TITLE_NAME: string (nullable = true)
+ |-- TITLE_CLEAN: string (nullable = true)
+ |-- SKILLS: string (nullable = true)
+ |-- SKILLS_NAME: string (nullable = true)
+ |-- SPECIALIZED_SKILLS: string (nullable = true)
+ |-- SPECIALIZED_SKILLS_NAME: string (nullable = true)
+ |-- CERTIFICATIONS: string (nullable = true)
+ |-- CERTIFICATIONS_NAME: string (nullable = true)
+ |-- COMMON_SKILLS: string (nullable = true)
+ |-- COMMON_SKILLS_NAME: string (nullable = true)
+ |-- SOFTWARE_SKILLS: string (nullable = true)
+ |-- SOFTWARE_SKILLS_NAME: string (nullable = true)
+ |-- ONET: string (nullable = true)
+ |-- ONET_NAME: string (nullable = true)
+ |-- CIP6: string (nullable = true)
+ |-- CIP6_NAME: string (nullable = true)
+ |-- CIP4: string (nullable = true)
+ |-- CIP4_NAME: string (nullable = true)
+ |-- CIP2: string (nullable = true)
+ |-- CIP2_NAME: string (nullable = true)
+ |-- SOC_2021_2: string (nullable = true)
+ |-- SOC_2021_2_NAME: string (nullable = true)
+ |-- SOC_2021_3: string (nullable = true)
+ |-- SOC_2021_3_NAME: string (nullable = true)
+ |-- SOC_2021_4: string (nullable = true)
+ |-- SOC_2021_4_NAME: string (nullable = true)
+ |-- SOC_2021_5: string (nullable = true)
+ |-- SOC_2021_5_NAME: string (nullable = true)
+ |-- METEOR_CAREER_AREA: string (nullable = true)
+ |-- METEOR_CAREER_AREA_NAME: string (nullable = true)
+ |-- METEOR_OCCUPATION: string (nullable = true)
+ |-- METEOR_OCCUPATION_NAME: string (nullable = true)
+ |-- METEOR_SPECIALIZED_OCCUPATION: string (nullable = true)
+ |-- METEOR_SPECIALIZED_OCCUPATION_NAME: string (nullable = true)
+ |-- METEOR_OCCUPATION_GROUP: string (nullable = true)
+ |-- METEOR_OCCUPATION_GROUP_NAME: string (nullable = true)
+ |-- METEOR_V6_SPECIALIZED_OCCUPATION: string (nullable = true)
+ |-- METEOR_V6_SPECIALIZED_OCCUPATION_NAME: string (nullable = true)
+ |-- METEOR_V6_OCCUPATION: string (nullable = true)
+ |-- METEOR_V6_OCCUPATION_NAME: string (nullable = true)
+ |-- METEOR_V6_OCCUPATION_GROUP: string (nullable = true)
+ |-- METEOR_V6_OCCUPATION_GROUP_NAME: string (nullable = true)
+ |-- METEOR_V6_CAREER_AREA: string (nullable = true)
+ |-- METEOR_V6_CAREER_AREA_NAME: string (nullable = true)
+ |-- SOC_2: string (nullable = true)
+ |-- SOC_2_NAME: string (nullable = true)
+ |-- SOC_3: string (nullable = true)
+ |-- SOC_3_NAME: string (nullable = true)
+ |-- SOC_4: string (nullable = true)
+ |-- SOC_4_NAME: string (nullable = true)
+ |-- SOC_5: string (nullable = true)
+ |-- SOC_5_NAME: string (nullable = true)
+ |-- METEOR_SECTORS: string (nullable = true)
+ |-- METEOR_SECTORS_NAME: string (nullable = true)
+ |-- NAICS_2022_2: string (nullable = true)
+ |-- NAICS_2022_2_NAME: string (nullable = true)
+ |-- NAICS_2022_3: string (nullable = true)
+ |-- NAICS_2022_3_NAME: string (nullable = true)
+ |-- NAICS_2022_4: string (nullable = true)
+ |-- NAICS_2022_4_NAME: string (nullable = true)
+ |-- NAICS_2022_5: string (nullable = true)
+ |-- NAICS_2022_5_NAME: string (nullable = true)
+ |-- NAICS_2022_6: string (nullable = true)
+ |-- NAICS_2022_6_NAME: string (nullable = true)
+ |-- IS_CONTRACT: byte (nullable = true)
+ |-- WRDS_GVKEY: string (nullable = true)
+ |-- WRDS_COMPANY_NAME: string (nullable = true)
+ |-- WRDS_NAICS: string (nullable = true)
+ |-- WRDS_NAICS_2022: string (nullable = true)
+ |-- WRDS_NAICS_2022_NAME: string (nullable = true)
+ |-- WRDS_SIC: string (nullable = true)
+ |-- WRDS_SIC_NAME: string (nullable = true)
+ |-- WRDS_AS_OF: string (nullable = true)
+ |-- WRDS_MATCH_BASIS: string (nullable = true)
+ |-- NAICS_REVIEW_STATUS: string (nullable = true)
+
++------+----------+----------+--------+------------------+------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+-------------------+----------------+---------------------+-------------+--------------------+-------------+--------------------+---------------+--------------------+--------------------+--------------------+-------------+--------------------+-----------+----------------+-------------------+---------+-----------+--------------------+----+-----------+------+-----------+----+--------+-----+-------------+---------------+--------------------+---------------+--------------------+------------+-----------------+------------+-----------------+------+--------------------+------+--------------------+------+--------------------+------+--------------------+------+--------------------+-----+--------------------+--------------------+--------------------+--------------------+--------------------+-----------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+----------+-------------------+-------+------------------+----+---------+----+---------+----------+---------------+----------+---------------+----------+---------------+----------+---------------+------------------+-----------------------+-----------------+----------------------+-----------------------------+----------------------------------+-----------------------+----------------------------+--------------------------------+-------------------------------------+--------------------+-------------------------+--------------------------+-------------------------------+---------------------+--------------------------+-----+----------+-------+--------------------+-------+--------------------+-------+-------------------+--------------+-------------------+------------+--------------------+------------+--------------------+------------+--------------------+------------+--------------------+------------+--------------------+-----------+----------+-----------------+----------+---------------+--------------------+--------+-------------+----------+----------------+-------------------+
+|    ID|    POSTED|   EXPIRED|DURATION|      SOURCE_TYPES|           SOURCES|                 URL|         ACTIVE_URLS| ACTIVE_SOURCES_INFO|           TITLE_RAW|                BODY|        COMPANY_NAME|         COMPANY_RAW|COMPANY_IS_STAFFING|EDUCATION_LEVELS|EDUCATION_LEVELS_NAME|MIN_EDULEVELS|  MIN_EDULEVELS_NAME|MAX_EDULEVELS|  MAX_EDULEVELS_NAME|EMPLOYMENT_TYPE|EMPLOYMENT_TYPE_NAME|MIN_YEARS_EXPERIENCE|MAX_YEARS_EXPERIENCE|IS_INTERNSHIP|              SALARY|REMOTE_TYPE|REMOTE_TYPE_NAME|ORIGINAL_PAY_PERIOD|SALARY_TO|SALARY_FROM|            LOCATION|CITY|  CITY_NAME|COUNTY|COUNTY_NAME| MSA|MSA_NAME|STATE|   STATE_NAME|COUNTY_OUTGOING|COUNTY_NAME_OUTGOING|COUNTY_INCOMING|COUNTY_NAME_INCOMING|MSA_OUTGOING|MSA_NAME_OUTGOING|MSA_INCOMING|MSA_NAME_INCOMING|NAICS2|         NAICS2_NAME|NAICS3|         NAICS3_NAME|NAICS4|         NAICS4_NAME|NAICS5|         NAICS5_NAME|NAICS6|         NAICS6_NAME|TITLE|          TITLE_NAME|         TITLE_CLEAN|              SKILLS|         SKILLS_NAME|  SPECIALIZED_SKILLS|SPECIALIZED_SKILLS_NAME|      CERTIFICATIONS| CERTIFICATIONS_NAME|       COMMON_SKILLS|  COMMON_SKILLS_NAME|     SOFTWARE_SKILLS|SOFTWARE_SKILLS_NAME|      ONET|          ONET_NAME|   CIP6|         CIP6_NAME|CIP4|CIP4_NAME|CIP2|CIP2_NAME|SOC_2021_2|SOC_2021_2_NAME|SOC_2021_3|SOC_2021_3_NAME|SOC_2021_4|SOC_2021_4_NAME|SOC_2021_5|SOC_2021_5_NAME|METEOR_CAREER_AREA|METEOR_CAREER_AREA_NAME|METEOR_OCCUPATION|METEOR_OCCUPATION_NAME|METEOR_SPECIALIZED_OCCUPATION|METEOR_SPECIALIZED_OCCUPATION_NAME|METEOR_OCCUPATION_GROUP|METEOR_OCCUPATION_GROUP_NAME|METEOR_V6_SPECIALIZED_OCCUPATION|METEOR_V6_SPECIALIZED_OCCUPATION_NAME|METEOR_V6_OCCUPATION|METEOR_V6_OCCUPATION_NAME|METEOR_V6_OCCUPATION_GROUP|METEOR_V6_OCCUPATION_GROUP_NAME|METEOR_V6_CAREER_AREA|METEOR_V6_CAREER_AREA_NAME|SOC_2|SOC_2_NAME|  SOC_3|          SOC_3_NAME|  SOC_4|          SOC_4_NAME|  SOC_5|         SOC_5_NAME|METEOR_SECTORS|METEOR_SECTORS_NAME|NAICS_2022_2|   NAICS_2022_2_NAME|NAICS_2022_3|   NAICS_2022_3_NAME|NAICS_2022_4|   NAICS_2022_4_NAME|NAICS_2022_5|   NAICS_2022_5_NAME|NAICS_2022_6|   NAICS_2022_6_NAME|IS_CONTRACT|WRDS_GVKEY|WRDS_COMPANY_NAME|WRDS_NAICS|WRDS_NAICS_2022|WRDS_NAICS_2022_NAME|WRDS_SIC|WRDS_SIC_NAME|WRDS_AS_OF|WRDS_MATCH_BASIS|NAICS_REVIEW_STATUS|
++------+----------+----------+--------+------------------+------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+-------------------+----------------+---------------------+-------------+--------------------+-------------+--------------------+---------------+--------------------+--------------------+--------------------+-------------+--------------------+-----------+----------------+-------------------+---------+-----------+--------------------+----+-----------+------+-----------+----+--------+-----+-------------+---------------+--------------------+---------------+--------------------+------------+-----------------+------------+-----------------+------+--------------------+------+--------------------+------+--------------------+------+--------------------+------+--------------------+-----+--------------------+--------------------+--------------------+--------------------+--------------------+-----------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+----------+-------------------+-------+------------------+----+---------+----+---------+----------+---------------+----------+---------------+----------+---------------+----------+---------------+------------------+-----------------------+-----------------+----------------------+-----------------------------+----------------------------------+-----------------------+----------------------------+--------------------------------+-------------------------------------+--------------------+-------------------------+--------------------------+-------------------------------+---------------------+--------------------------+-----+----------+-------+--------------------+-------+--------------------+-------+-------------------+--------------+-------------------+------------+--------------------+------------+--------------------+------------+--------------------+------------+--------------------+------------+--------------------+-----------+----------+-----------------+----------+---------------+--------------------+--------+-------------+----------+----------------+-------------------+
+|208140|2026-06-05|2026-06-11|       6|["fantastic_jobs"]|["fantastic_jobs"]|https://www.payco...|                NULL|                NULL|Transportation Da...|Job DetailsJob Lo...|      HW LOCHNER INC|      HW LOCHNER INC|               NULL|          [4, 5]| ["Bachelor's degr...|         NULL|                NULL|            5|     Master's degree|      full_time|           FULL_TIME|                NULL|                NULL|            0|USD 90000 - 11000...|          2|          Hybrid|             annual|   110000|      90000|Orange, Californi...|NULL| California|  NULL|       NULL|NULL|    NULL| NULL|United States|           NULL|                NULL|           NULL|                NULL|        NULL|             NULL|        NULL|             NULL|    54|Professional, Sci...|   541|Professional, Sci...|  5413|Architectural, En...|  NULL|                NULL|  NULL|                NULL| NULL|Transportation Da...|Transportation Da...|["KS1200H6XYN1CR0...|["Microsoft Excel...|["KS125LS6N7WP4S6...|   ["Python (Program...|                  []|                  []|["KS1200H6XYN1CR0...| ["Microsoft Excel"]|["KS1200H6XYN1CR0...|["Microsoft Excel...|41-9012.00|             Models|   NULL|              NULL|NULL|     NULL|NULL|     NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|           41-0000|   Sales and Related...|          41-9012|                Models|                   41-9012.00|                            Models|                41-9000|        Other Sales and R...|                      41-9012.00|                               Models|             41-9012|                   Models|                   41-9000|           Other Sales and R...|              41-0000|      Sales and Related...|   41|      NULL|41-9000|Other Sales and R...|41-9010|Models, Demonstra...|41-9012|             Models|          NULL|               NULL|          54|Professional, Sci...|         541|Professional, Sci...|        5413|Architectural, En...|        NULL|                NULL|        NULL|                NULL|       NULL|      NULL|             NULL|      NULL|           NULL|                NULL|    NULL|         NULL|      NULL|            NULL|               NULL|
+|208141|2024-09-11|      NULL|    NULL|       ["jobhive"]|        ["oracle"]|https://ejrz.fa.u...|["https://ejrz.fa...|[{"source": "jobh...|Admissions Regist...|The Admissions RN...|                EJRZ|                EJRZ|               NULL|             [1]| ["High school dip...|            1|High school diplo...|            1|High school diplo...|           NULL|                NULL|                   0|                   1|            0|{'min': '', 'max'...|       NULL|            NULL|               NULL|     NULL|       NULL|       United States|NULL|       NULL|  NULL|       NULL|NULL|    NULL| NULL|         NULL|           NULL|                NULL|           NULL|                NULL|        NULL|             NULL|        NULL|             NULL| 31-33|       Manufacturing|   331|Primary Metal Man...|  NULL|                NULL|  NULL|                NULL|  NULL|                NULL| NULL|Admissions Regist...|Admissions Regist...|                  []|                  []|                  []|                     []|                  []|                  []|                  []|                  []|                  []|                  []|29-1141.00|  Registered Nurses|   NULL|              NULL|NULL|     NULL|NULL|     NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|           29-0000|   Healthcare Practi...|          29-1141|     Registered Nurses|                   29-1141.00|                 Registered Nurses|                29-1000|        Healthcare Diagno...|                      29-1141.00|                    Registered Nurses|             29-1141|        Registered Nurses|                   29-1000|           Healthcare Diagno...|              29-0000|      Healthcare Practi...|   29|      NULL|29-1000|Healthcare Diagno...|29-1140|   Registered Nurses|29-1141|  Registered Nurses|          NULL|               NULL|       31-33|       Manufacturing|         331|Primary Metal Man...|        NULL|                NULL|        NULL|                NULL|        NULL|                NULL|       NULL|      NULL|             NULL|      NULL|           NULL|                NULL|    NULL|         NULL|      NULL|            NULL|               NULL|
+|208142|2026-03-17|      NULL|    NULL|       ["jobhive"]|        ["amazon"]|https://account.a...|["https://account...|[{"source": "jobh...|Risk Manager, Sel...|We are seeking a ...|              Amazon|              Amazon|               NULL|             [1]| ["High school dip...|            1|High school diplo...|            1|High school diplo...|      full_time|           Full Time|                   0|                   1|            0|{'min': '', 'max'...|       NULL|            NULL|               NULL|     NULL|       NULL|      Tempe, Arizona|NULL|      Tempe|  NULL|       NULL|NULL|    NULL|   AZ|      Arizona|           NULL|                NULL|           NULL|                NULL|        NULL|             NULL|        NULL|             NULL|    51|         Information|   516|Broadcasting and ...|  5162|Media Streaming D...| 51621|Media Streaming D...|516210|Media Streaming D...| NULL|Risk Manager, Sel...|Risk Manager, Sel...|["KS441075WGFJJ4G...|["Strategic Think...|                  []|                     []|                  []|                  []|["KS441075WGFJJ4G...|["Strategic Think...|                  []|                  []|27-2011.00|             Actors|   NULL|              NULL|NULL|     NULL|NULL|     NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|           27-0000|   Arts, Design, Ent...|          27-2011|                Actors|                   27-2011.00|                            Actors|                27-2000|        Entertainers and ...|                      27-2011.00|                               Actors|             27-2011|                   Actors|                   27-2000|           Entertainers and ...|              27-0000|      Arts, Design, Ent...|   27|      NULL|27-2000|Entertainers and ...|27-2010|Actors, Producers...|27-2011|             Actors|          NULL|               NULL|          51|         Information|         516|Broadcasting and ...|        5162|Media Streaming D...|       51621|Media Streaming D...|      516210|Media Streaming D...|       NULL|      NULL|             NULL|      NULL|           NULL|                NULL|    NULL|         NULL|      NULL|            NULL|               NULL|
+|208143|2026-07-20|      NULL|    NULL|     ["rareroles"]|     ["rareroles"]|https://boards.gr...|["https://boards....|[{"source": "rare...|ServiceNow Sr. De...|                NULL|Accenture Federal...|Accenture Federal...|               NULL|             [1]| ["High school dip...|            1|High school diplo...|            1|High school diplo...|      full_time|           Full Time|                   0|                   1|            0|USD 146,300 - 179...|       NULL|            NULL|             annual|   179100|     146300|Springfield, Virg...|NULL|Springfield|  NULL|       NULL|NULL|    NULL|   VA|     Virginia|           NULL|                NULL|           NULL|                NULL|        NULL|             NULL|        NULL|             NULL| 48-49|Transportation an...|   492|Couriers and Mess...|  4921|Couriers and Expr...| 49211|Couriers and Expr...|492110|Couriers and Expr...| NULL|ServiceNow Sr. De...|ServiceNow Sr. De...|                  []|                  []|                  []|                     []|                  []|                  []|                  []|                  []|                  []|                  []|15-1252.00|Software Developers|52.0211|Project Management|NULL|     NULL|NULL|     NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|           15-0000|   Computer and Math...|          15-1252|   Software Developers|                   15-1252.00|               Software Developers|                15-1200|        Computer Occupations|                      15-1252.00|                  Software Developers|             15-1252|      Software Developers|                   15-1200|           Computer Occupations|              15-0000|      Computer and Math...|   15|      NULL|15-1200|Computer Occupations|15-1250|Software and Web ...|15-1252|Software Developers|          NULL|               NULL|       48-49|Transportation an...|         492|Couriers and Mess...|        4921|Couriers and Expr...|       49211|Couriers and Expr...|      492110|Couriers and Expr...|       NULL|      NULL|             NULL|      NULL|           NULL|                NULL|    NULL|         NULL|      NULL|            NULL|               NULL|
+|208144|2024-07-22|      NULL|    NULL|       ["jobhive"]|         ["icims"]|https://careers-s...|["https://careers...|[{"source": "jobh...|Traveling Retail ...|Overview Travelin...|             Sparinc|             Sparinc|               NULL|             [1]| ["High school dip...|            1|High school diplo...|            1|High school diplo...|      full_time| Full Time, Per diem|                   0|                   1|            0|{'min': '', 'max'...|       NULL|            NULL|               NULL|     NULL|       NULL|     Cleveland, Ohio|NULL|  Cleveland|  NULL|       NULL|NULL|    NULL|   OH|         Ohio|           NULL|                NULL|           NULL|                NULL|        NULL|             NULL|        NULL|             NULL|    23|        Construction|   237|Heavy and Civil E...|  2371|Utility System Co...| 23713|Power and Communi...|237130|Power and Communi...| NULL|Traveling Retail ...|Traveling Retail ...|["KS126HY6YLTB9R7...|["Microsoft Offic...|["KS127CS79GV081F...|   ["Operations Mana...|["ESE495A4017EB94...|["Valid Driver's ...|["KS126HY6YLTB9R7...|["Microsoft Offic...|["KS126HY6YLTB9R7...|["Microsoft Office"]|41-9012.00|             Models|   NULL|              NULL|NULL|     NULL|NULL|     NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|      NULL|           NULL|           41-0000|   Sales and Related...|          41-9012|                Models|                   41-9012.00|                            Models|                41-9000|        Other Sales and R...|                      41-9012.00|                               Models|             41-9012|                   Models|                   41-9000|           Other Sales and R...|              41-0000|      Sales and Related...|   41|      NULL|41-9000|Other Sales and R...|41-9010|Models, Demonstra...|41-9012|             Models|          NULL|               NULL|          23|        Construction|         237|Heavy and Civil E...|        2371|Utility System Co...|       23713|Power and Communi...|      237130|Power and Communi...|       NULL|      NULL|             NULL|      NULL|           NULL|                NULL|    NULL|         NULL|      NULL|            NULL|               NULL|
++------+----------+----------+--------+------------------+------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+-------------------+----------------+---------------------+-------------+--------------------+-------------+--------------------+---------------+--------------------+--------------------+--------------------+-------------+--------------------+-----------+----------------+-------------------+---------+-----------+--------------------+----+-----------+------+-----------+----+--------+-----+-------------+---------------+--------------------+---------------+--------------------+------------+-----------------+------------+-----------------+------+--------------------+------+--------------------+------+--------------------+------+--------------------+------+--------------------+-----+--------------------+--------------------+--------------------+--------------------+--------------------+-----------------------+--------------------+--------------------+--------------------+--------------------+--------------------+--------------------+----------+-------------------+-------+------------------+----+---------+----+---------+----------+---------------+----------+---------------+----------+---------------+----------+---------------+------------------+-----------------------+-----------------+----------------------+-----------------------------+----------------------------------+-----------------------+----------------------------+--------------------------------+-------------------------------------+--------------------+-------------------------+--------------------------+-------------------------------+---------------------+--------------------------+-----+----------+-------+--------------------+-------+--------------------+-------+-------------------+--------------+-------------------+------------+--------------------+------------+--------------------+------------+--------------------+------------+--------------------+------------+--------------------+-----------+----------+-----------------+----------+---------------+--------------------+--------+-------------+----------+----------------+-------------------+
+only showing top 5 rows</code></pre>
+</div>
+</div>
 
 
 
