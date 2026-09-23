@@ -270,7 +270,7 @@ display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 #  Salary by Education Level
 ```{python}
-exp_edu_df = spark.sql("""
+edu_df = spark.sql("""
     SELECT
         CASE
             WHEN LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%ged%'
@@ -289,10 +289,10 @@ exp_edu_df = spark.sql("""
               OR LOWER(EDUCATION_LEVELS_NAME_CLEAN) LIKE '%professional degree%'
                 THEN 'PhD / Doctorate'
             ELSE 'Associate''s or Lower'
-        END AS EDU_GROUP,
+        END                                       AS EDU_GROUP,
         TRY_CAST(MAX_YEARS_EXPERIENCE AS DOUBLE)  AS MAX_EXPERIENCE,
-        ONET_NAME AS OCCUPATION_NAME,
-        ROUND(AVG(SALARY_IMPUTED_ANNUAL), 0) AS AVERAGE_SALARY
+        ONET_NAME                                 AS OCCUPATION_NAME,
+        ROUND(AVG(SALARY_IMPUTED_ANNUAL), 0)      AS AVERAGE_SALARY
     FROM job_postings_clean
     WHERE SALARY_IMPUTED_ANNUAL IS NOT NULL
       AND SALARY_IMPUTED_ANNUAL > 1000
@@ -302,23 +302,43 @@ exp_edu_df = spark.sql("""
     ORDER BY MAX_EXPERIENCE
 """).toPandas()
 
-# Remove 99th pct  outliers
-p99 = exp_edu_df["AVERAGE_SALARY"].quantile(0.99)
-exp_edu_df = exp_edu_df[exp_edu_df["AVERAGE_SALARY"] <= p99]
+# Filter out 99th pct values
+p99 = edu_df["AVERAGE_SALARY"].quantile(0.99)
+edu_df = edu_df[edu_df["AVERAGE_SALARY"] <= p99]
 
-# Add jitter to X-axis so overlapping points are readable
+# Add jitter to X-axis
 np.random.seed(42)
-exp_edu_df["MAX_EXPERIENCE_JITTER"] = (
-    exp_edu_df["MAX_EXPERIENCE"] + np.random.uniform(-0.25, 0.25, len(exp_edu_df))
+edu_df["MAX_EXPERIENCE_JITTER"] = (
+    edu_df["MAX_EXPERIENCE"] + np.random.uniform(-0.25, 0.25, len(edu_df))
 )
 
-EDU_ORDER = ["Associate's or Lower", "Bachelor's", "Master's", "PhD / Doctorate"]
-EDU_COLOR = {
-    "Associate's or Lower": "#2a78d6",   # slot 1 – blue
-    "Bachelor's":           "#eb6834",   # slot 2 – orange
-    "Master's":             "#1baf7a",   # slot 3 – aqua
-    "PhD / Doctorate":      "#eda100",   # slot 4 – yellow
+EDU_ORDER  = ["Associate's or Lower", "Bachelor's", "Master's", "PhD / Doctorate"]
+EDU_COLOR  = {
+    "Associate's or Lower": "#2a78d6",
+    "Bachelor's":           "#eb6834",
+    "Master's":             "#1baf7a",
+    "PhD / Doctorate":      "#eda100",
 }
+
+fig = px.scatter(
+    edu_df,
+    x="MAX_EXPERIENCE_JITTER",
+    y="AVERAGE_SALARY",
+    color="EDU_GROUP",
+    color_discrete_map=EDU_COLOR,
+    category_orders={"EDU_GROUP": EDU_ORDER},
+    hover_name="OCCUPATION_NAME",
+    hover_data={"MAX_EXPERIENCE_JITTER": False, "MAX_EXPERIENCE": True,
+                "AVERAGE_SALARY": ":$,.0f", "EDU_GROUP": False},
+    title="Experience vs Salary by Education Level",
+    labels={
+        "MAX_EXPERIENCE_JITTER": "Years of Experience",
+        "AVERAGE_SALARY":        "Average Salary (USD)",
+        "EDU_GROUP":             "Education Level",
+        "MAX_EXPERIENCE":        "Years of Experience",
+    },
+    opacity=0.72,
+)
 
 fig.update_traces(marker=dict(size=8, line=dict(width=0.5, color="rgba(0,0,0,0.15)")))
 
@@ -326,7 +346,7 @@ fig.update_layout(
     height=550,
     font=dict(family="system-ui, -apple-system, 'Segoe UI', sans-serif", size=12),
     title_font=dict(size=15, color="#1a2744"),
-    plot_bgcolor="#fffbee",      # warm cream matching reference
+    plot_bgcolor="#fffbee",
     paper_bgcolor="#fffbee",
     xaxis=dict(
         title="Years of Experience",
@@ -351,9 +371,8 @@ fig.update_layout(
     margin=dict(t=60, b=80, l=100, r=20),
 )
 
-print("")
+print("...")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
-
 
 ```
 
@@ -441,6 +460,7 @@ fig.update_layout(
     margin=dict(t=60, b=80, l=100, r=20),
 )
 
+print("Remote roles command a consistent salary premium over on-site positions across all experience levels, with the gap widening noticeably beyond 3 years.")
 display(HTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
 
 ```
