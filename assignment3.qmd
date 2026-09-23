@@ -66,45 +66,96 @@ df.createOrReplaceTempView("job_postings")
 #Calclate Average of SALARY_FROM + SALARY_TO if both are valid
 #Default to whichever single field is available
 #Default to NULL if all three are missing/empty/zero
+
 cleaned_df = spark.sql("""
-    with base as (
-    SELECT DISTINCT
-        --*,
-        ID,
-        NAICS2_NAME,
-        EMPLOYMENT_TYPE_NAME,
-        REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[\\n\\r]', ' ') AS EDUCATION_LEVELS_NAME_CLEAN,
-        REMOTE_TYPE_NAME,
-        MAX_YEARS_EXPERIENCE,
-        ONET_NAME,
-        SALARY_FROM,
-        SALARY_TO,
-        SALARY,
+    WITH base AS (
+        SELECT DISTINCT
+            ID,
+            NAICS2_NAME,
+            EMPLOYMENT_TYPE_NAME,
+            REGEXP_REPLACE(EDUCATION_LEVELS_NAME, '[\\n\\r]', ' ') AS EDUCATION_LEVELS_NAME_CLEAN,
+            REMOTE_TYPE_NAME,
+            MAX_YEARS_EXPERIENCE,
+            ONET_NAME,
+            SALARY_FROM,
+            SALARY_TO,
+            SALARY,
+            CASE
+                WHEN SALARY IS NOT NULL
+                     AND SALARY != ''
+                     AND TRY_CAST(SALARY AS DOUBLE) > 0
+                    THEN TRY_CAST(SALARY AS DOUBLE)
+                WHEN TRY_CAST(SALARY_FROM AS DOUBLE) > 0
+                     AND TRY_CAST(SALARY_TO AS DOUBLE) > 0
+                    THEN (TRY_CAST(SALARY_FROM AS DOUBLE) + TRY_CAST(SALARY_TO AS DOUBLE)) / 2.0
+                WHEN TRY_CAST(SALARY_FROM AS DOUBLE) > 0
+                    THEN TRY_CAST(SALARY_FROM AS DOUBLE)
+                WHEN TRY_CAST(SALARY_TO AS DOUBLE) > 0
+                    THEN TRY_CAST(SALARY_TO AS DOUBLE)
+                ELSE NULL
+            END AS SALARY_IMPUTED
+        FROM job_postings
+    ),
+    expanded AS (
+        SELECT
+            b.ID,
+            b.NAICS2_NAME,
+            TRIM(emp_type) AS EMPLOYMENT_TYPE_NAME,
+            TRIM(edu_level) AS EDUCATION_LEVELS_NAME_CLEAN,
+            b.REMOTE_TYPE_NAME,
+            b.MAX_YEARS_EXPERIENCE,
+            b.ONET_NAME,
+            b.SALARY_FROM,
+            b.SALARY_TO,
+            b.SALARY,
+            b.SALARY_IMPUTED
+        FROM base b
+        -- flatten comma-separated employment types into individual rows
+        LATERAL VIEW OUTER EXPLODE(SPLIT(b.EMPLOYMENT_TYPE_NAME, ',')) e AS emp_type
+        -- flatten JSON array of education levels into individual rows
+        LATERAL VIEW OUTER EXPLODE(FROM_JSON(
+            b.EDUCATION_LEVELS_NAME_CLEAN, 'ARRAY<STRING>'
+        )) d AS edu_level
+        WHERE b.SALARY_IMPUTED > 0
+    )
+    SELECT
+        *,
+        -- if SALARY_IMPUTED is an hourly rate (< $1,000) then annualise it
+        -- threshold: $1,000 < lowest plausible annual; × 2,080 = 40 hrs × 52 wks
         CASE
-            WHEN SALARY IS NOT NULL
-                 AND SALARY != ''
-                 AND TRY_CAST(SALARY AS DOUBLE) > 0
-                THEN TRY_CAST(SALARY AS DOUBLE)
-            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) > 0
-                 AND TRY_CAST(SALARY_TO AS DOUBLE) > 0
-                THEN (TRY_CAST(SALARY_FROM AS DOUBLE) + TRY_CAST(SALARY_TO AS DOUBLE)) / 2.0
-            WHEN TRY_CAST(SALARY_FROM AS DOUBLE) > 0
-                THEN TRY_CAST(SALARY_FROM AS DOUBLE)
-            WHEN TRY_CAST(SALARY_TO AS DOUBLE) > 0
-                THEN TRY_CAST(SALARY_TO AS DOUBLE)
-            ELSE NULL
-        END AS SALARY_IMPUTED
-    FROM job_postings
-    ) 
-    select * from base where SALARY_IMPUTED > 0
+            WHEN SALARY_IMPUTED < 1000 THEN ROUND(SALARY_IMPUTED * 2080, 0)
+            ELSE SALARY_IMPUTED
+        END AS SALARY_ANNUAL
+    FROM expanded
 """)
 
-cleaned_df.createOrReplaceTempView("job_postings_clean")
 
+cleaned_df.createOrReplaceTempView("job_postings_clean")
+cleaned_df.toPandas().to_csv("salary_cleaned.csv", index=False)
 spark.sql("SELECT * FROM job_postings_clean LIMIT 5").toPandas()
 
 ```
 
 
+# Salary Distribution by Industry and Employment Type
+## TBD
+```{python}
 
 
+```
+
+
+#  Salary Analysis by ONET Occupation Type (Bubble Chart)
+## TBD
+```{python}
+
+
+```
+
+
+#  Salary by Education Level
+## TBD
+```{python}
+
+
+```
