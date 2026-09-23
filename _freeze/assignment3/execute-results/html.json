@@ -1,0 +1,12 @@
+{
+  "hash": "d92c8a44f99bc92b066f22b1a0aad478",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Week 3\"\nformat: html\njupyter: python3\nexecute:\n  freeze: true \n---\n\n",
+    "supporting": [
+      "assignment3_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

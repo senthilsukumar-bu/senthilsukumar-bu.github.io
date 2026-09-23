@@ -11,6 +11,8 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: assignment1.qmd
+        text: Assignment 1
       - href: assignment2.qmd
         text: Assignment 2
       - href: assignment3.qmd
