@@ -24,7 +24,7 @@ spark = SparkSession.builder.appName("CareerCompassData").getOrCreate()
 
 # Load Data (all 17 Parquet partition files)
 from pathlib import Path
-data_dir = Path(..\Jobs\_2026\").resolve()  # Use ../Jobs_2026 if you downloaded the dataset folder beside your repository. Change the path if you saved it elsewhere.
+data_dir = Path(r"..\Jobs\_2026\").resolve()  # Use ../Jobs_2026 if you downloaded the dataset folder beside your repository. Change the path if you saved it elsewhere.
 df = spark.read.parquet(*[path.as_uri() for path in sorted(data_dir.glob("*.parquet"))])
 model_source_cols = [
     "SALARY_TO", "SALARY_FROM", "SALARY",
