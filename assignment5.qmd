@@ -8,20 +8,21 @@ execute:
 
 ## Assignment 5 - Load data into Spark, Create Tables and Queries
 ```{python}
+
+
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.types import ArrayType
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 import numpy as np
 
 np.random.seed(42)
-
 pio.renderers.default = "notebook+notebook_connected+vscode"
 
-# Initialize Spark Session
 spark = SparkSession.builder.appName("CareerCompassData").getOrCreate()
 
-# Load Data (all 17 Parquet partition files)
 from pathlib import Path
 
 data_dir = Path("./Jobs_2026")  
@@ -37,19 +38,71 @@ model_source_cols = [
 ]
 df = df.select(*model_source_cols)
 
-# Show Schema and Sample Data
-print("---This is Diagnostic check, No need to print it in the final doc---")
+# Cast numeric columns to double and replace NaN with null
+numeric_cols = ["SALARY_TO", "SALARY_FROM", "SALARY",
+                "MIN_YEARS_EXPERIENCE", "MAX_YEARS_EXPERIENCE", "DURATION"]
 
-df.printSchema() # comment this line when rendering the submission
+for c in numeric_cols:
+    df = df.withColumn(c, F.expr("try_cast(`" + c + "` as double)"))
+    df = df.withColumn(
+        c,
+        F.when(F.col(c).isNull() | F.isnan(F.col(c)), None).otherwise(F.col(c))
+    )
+
+# REMOTE_TYPE_NAME and EDUCATION_LEVELS_NAME — ArrayType: explode directly
+for col_name in ["REMOTE_TYPE_NAME", "EDUCATION_LEVELS_NAME"]:
+    if isinstance(df.schema[col_name].dataType, ArrayType):
+        df = df.withColumn(col_name, F.explode_outer(F.col(col_name)))
+
+# Normalize REMOTE_TYPE_NAME
+df = df.withColumn(
+    "REMOTE_TYPE_NAME",
+    F.when(F.col("REMOTE_TYPE_NAME") == "On-site", "Onsite")
+     .when(F.col("REMOTE_TYPE_NAME").isNull() | (F.col("REMOTE_TYPE_NAME") == "Unknown"), "Unknown")
+     .otherwise(F.col("REMOTE_TYPE_NAME"))
+)
+
+# EMPLOYMENT_TYPE_NAME — comma-separated string: split then explode
+df = df.withColumn(
+    "EMPLOYMENT_TYPE_NAME",
+    F.explode_outer(F.split(F.col("EMPLOYMENT_TYPE_NAME"), r",\s*"))
+)
+df = df.withColumn("EMPLOYMENT_TYPE_NAME", F.trim(F.col("EMPLOYMENT_TYPE_NAME")))
+
+# Normalize EMPLOYMENT_TYPE_NAME — collapse all variations to canonical labels
+e = F.lower(F.col("EMPLOYMENT_TYPE_NAME"))
+df = df.withColumn(
+    "EMPLOYMENT_TYPE_NAME",
+    F.when(e.contains("intern"),                           "Internship")
+     .when(e.contains("per diem") | e.contains("perdiem"), "Per Diem")
+     .when(e.contains("temp"),                             "Temporary")
+     .when(e.contains("contract"),                         "Contract")
+     .when(e.contains("part"),                             "Part Time")
+     .when(e.contains("permanent"),                        "Permanent")
+     .when(e.contains("remote"),                           "Remote")
+     .when(e.contains("full"),                             "Full Time")
+     .otherwise(None)
+)
+
+# Replace empty strings with null across all string columns
+for col_name in ["REMOTE_TYPE_NAME", "EDUCATION_LEVELS_NAME", "EMPLOYMENT_TYPE_NAME"]:
+    df = df.withColumn(
+        col_name,
+        F.when(F.trim(F.col(col_name)) == "", None).otherwise(F.col(col_name))
+    )
+
+print("---Diagnostic check, No need to print it in the final doc---")
+df.printSchema()
 df.show(5)
 
-df.groupBy("EDUCATION_LEVELS_NAME").count().show()
-df.groupBy("EMPLOYMENT_TYPE_NAME").count().show()
-df.groupBy("REMOTE_TYPE_NAME").count().show()
+df.groupBy("EDUCATION_LEVELS_NAME").count().orderBy("count", ascending=False).show()
+df.groupBy("EMPLOYMENT_TYPE_NAME").count().orderBy("count", ascending=False).show()
+df.groupBy("REMOTE_TYPE_NAME").count().orderBy("count", ascending=False).show()
+
 
 ```
 
-## Feature Engineering and Train/Test split
+###  Feature Engineering 
 ```{python}
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
@@ -66,6 +119,7 @@ continuous_cols = [
 categorical_cols = [
     "REMOTE_TYPE_NAME",
     "EMPLOYMENT_TYPE_NAME",
+    "EDUCATION_LEVELS_NAME",
 ]
 target_col = "SALARY_FROM"   # ← use SALARY_FROM (cleaner numeric) as target
 
@@ -139,24 +193,29 @@ df_poly.select(*show_cols).show(5, truncate=True)
 ```{python}
 from pyspark.ml.regression import LinearRegression
 from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.sql.functions import udf, col
+from pyspark.sql.functions import udf, col, isnan
 from pyspark.sql.types import BooleanType
 from scipy import stats
 import numpy as np
 import pandas as pd
 import math
 
+boolean_cols = ["IS_INTERNSHIP", "COMPANY_IS_STAFFING"]
+
+# ── NaN guard on feature vector ───────────────────────────────────────────────
 @udf(BooleanType())
 def has_nan_or_inf(v):
     if v is None:
         return True
     return any(math.isnan(x) or math.isinf(x) for x in v.toArray())
 
-train_df = train_df.filter(~has_nan_or_inf(col("features")))
-test_df  = test_df.filter(~has_nan_or_inf(col("features")))
+train_clean = train_df.filter(~has_nan_or_inf(col("features")))
+test_clean  = test_df.filter(~has_nan_or_inf(col("features")))
 
-print(f"Train rows after NaN filter : {train_df.count():,}")
-print(f"Test  rows after NaN filter : {test_df.count():,}")
+print("Train rows :", train_clean.count())
+print("Test  rows :", test_clean.count())
+
+
 
 # ── Train ─────────────────────────────────────────────────────────────────────
 lr = LinearRegression(
@@ -168,57 +227,61 @@ lr = LinearRegression(
     elasticNetParam=0.0,
     standardization=False
 )
-lr_model = lr.fit(train_df)
+lr_model = lr.fit(train_clean)
 
-# ── Evaluate on test set ──────────────────────────────────────────────────────
-predictions = lr_model.transform(test_df)
+# ── Evaluate ──────────────────────────────────────────────────────────────────
+predictions = lr_model.transform(test_clean)
 
-r2   = RegressionEvaluator(labelCol=target_col, predictionCol="prediction", metricName="r2").evaluate(predictions)
-rmse = RegressionEvaluator(labelCol=target_col, predictionCol="prediction", metricName="rmse").evaluate(predictions)
-mae  = RegressionEvaluator(labelCol=target_col, predictionCol="prediction", metricName="mae").evaluate(predictions)
+evaluator = RegressionEvaluator(labelCol=target_col, predictionCol="prediction")
+r2   = evaluator.setMetricName("r2").evaluate(predictions)
+rmse = evaluator.setMetricName("rmse").evaluate(predictions)
+mae  = evaluator.setMetricName("mae").evaluate(predictions)
 
-print(f"Intercept : {lr_model.intercept:,.4f}")
-print(f"R²        : {r2:.4f}")
-print(f"RMSE      : {rmse:,.2f}")
-print(f"MAE       : {mae:,.2f}")
+print("Intercept :", round(lr_model.intercept, 4))
+print("R2        :", round(r2, 4))
+print("RMSE      :", round(rmse, 2))
+print("MAE       :", round(mae, 2))
 
-# ── Coefficients, SE, t-values, p-values ─────────────────────────────────────
+# ── SE / t-values / p-values ──────────────────────────────────────────────────
 summary = lr_model.summary
 coefs   = np.array(lr_model.coefficients.toArray())
 n_feats = len(coefs)
 
 try:
-    # Exact SE — only works when X'X is invertible
     se    = np.array(summary.coefficientStandardErrors[:-1])
     tvals = np.array(summary.tValues[:-1])
     pvals = np.array(summary.pValues[:-1])
     se_method = "exact"
 except Exception:
-    # Fallback: approximate SE from residuals (near-multicollinearity in OHE features)
-    train_pred = lr_model.transform(train_df)
+    train_pred = lr_model.transform(train_clean)
     n   = train_pred.count()
-    rss = train_pred.selectExpr(f"sum(pow({target_col} - prediction, 2)) as rss").collect()[0]["rss"]
+    rss_row = train_pred.selectExpr(
+        "sum(pow(" + target_col + " - prediction, 2)) as rss"
+    ).collect()[0]
+    rss = rss_row["rss"]
     mse = rss / (n - n_feats - 1)
     se    = np.full(n_feats, np.sqrt(mse / n))
     tvals = coefs / se
     pvals = 2 * (1 - stats.t.cdf(np.abs(tvals), df=n - n_feats - 1))
-    se_method = "approximated (X'X near-singular due to OHE multicollinearity)"
+    se_method = "approximated"
 
-# ── Diagnostic check ──────────────────────────────────────────────────────────
-print("\n---This is Diagnostic check, No need to print it in the final doc---")
-print("---The numbers below should all be same---")
-print(f"SE method:          {se_method}")
-print(f"Length of features: {n_feats}")
-print(f"Length of coefs:    {len(coefs)}")
-print(f"Length of se:       {len(se)}")
-print(f"Length of tvals:    {len(tvals)}")
-print(f"Length of pvals:    {len(pvals)}")
+# ── Feature names from VectorAssembler metadata (ground truth) ────────────────
+meta  = train_df.schema["features"].metadata
+attrs = meta.get("ml_attr", {}).get("attrs", {})
 
-# ── Build feature names ───────────────────────────────────────────────────────
-n_ohe = n_feats - len(continuous_cols)
-feature_names = list(continuous_cols) + [f"ohe_feature_{i}" for i in range(n_ohe)]
+name_map = {}
+for attr_type, attr_list in attrs.items():
+    for attr in attr_list:
+        name_map[attr["idx"]] = attr["name"]
 
-# ── Coefficient summary DataFrame ─────────────────────────────────────────────
+feature_names = [name_map.get(i, "feature_" + str(i)) for i in range(n_feats)]
+
+n_names = len(feature_names)
+if n_names != n_feats:
+    raise ValueError("Mismatch: " + str(n_names) + " names vs " + str(n_feats) + " features")
+
+print("Feature names:", feature_names)
+# ── Coefficient DataFrame ─────────────────────────────────────────────────────
 ci_lower = coefs - 1.96 * se
 ci_upper = coefs + 1.96 * se
 
@@ -233,15 +296,352 @@ coef_df = pd.DataFrame({
     "Significant" : ["Yes" if p < 0.05 else "No" for p in pvals],
 })
 
+top15 = coef_df.reindex(
+    coef_df["Coefficient"].abs().sort_values(ascending=False).index
+).head(15)
 print("\nTop 15 features by absolute coefficient:")
-top15 = coef_df.reindex(coef_df["Coefficient"].abs().sort_values(ascending=False).index).head(15)
 print(top15.to_string(index=False))
 
-# ── Interpretation ────────────────────────────────────────────────────────────
 sig_count = (coef_df["Significant"] == "Yes").sum()
-print(f"\nModel Performance:")
-print(f"  R² = {r2:.4f}  → model explains {r2*100:.1f}% of variance in salary")
-print(f"  RMSE = {rmse:,.2f}  → average prediction error in salary units")
-print(f"  MAE  = {mae:,.2f}  → median absolute prediction error")
-print(f"\n{sig_count} of {n_feats} features are statistically significant (p < 0.05)")
+print("\nModel Performance:")
+print("  R2   =", round(r2, 4), "-> explains", str(round(r2 * 100, 1)) + "% of variance in salary")
+print("  RMSE =", round(rmse, 2), "-> avg prediction error in salary units")
+print("  MAE  =", round(mae, 2), "-> median absolute prediction error")
+print(str(sig_count) + " of " + str(n_feats) + " features statistically significant (p < 0.05)")
+print("SE method:", se_method)
+```
+
+
+###  Polymnomial Regression
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.sql.functions import udf, col, isnan
+from pyspark.sql.types import BooleanType
+from scipy import stats
+import numpy as np, pandas as pd, math
+
+@udf(BooleanType())
+def has_nan_or_inf(v):
+    if v is None: return True
+    return any(math.isnan(x) or math.isinf(x) for x in v.toArray())
+
+train_clean_poly = train_df.filter(
+    col(target_col).isNotNull() & ~isnan(col(target_col))
+).filter(~has_nan_or_inf(col("features_poly")))
+
+test_clean_poly = test_df.filter(
+    col(target_col).isNotNull() & ~isnan(col(target_col))
+).filter(~has_nan_or_inf(col("features_poly")))
+
+lr_poly = LinearRegression(
+    featuresCol="features_poly",
+    labelCol=target_col,
+    maxIter=100,
+    solver="normal",
+    regParam=0.0,
+    elasticNetParam=0.0,
+    standardization=False
+)
+lr_poly_model = lr_poly.fit(train_clean_poly)
+
+predictions_poly = lr_poly_model.transform(test_clean_poly)
+evaluator = RegressionEvaluator(labelCol=target_col, predictionCol="prediction")
+
+r2_poly   = evaluator.setMetricName("r2").evaluate(predictions_poly)
+rmse_poly = evaluator.setMetricName("rmse").evaluate(predictions_poly)
+mae_poly  = evaluator.setMetricName("mae").evaluate(predictions_poly)
+
+summary_poly = lr_poly_model.summary
+coefs_poly   = np.array(lr_poly_model.coefficients.toArray())
+n_feats_poly = len(coefs_poly)
+
+try:
+    se_poly    = np.array(summary_poly.coefficientStandardErrors[:-1])
+    tvals_poly = np.array(summary_poly.tValues[:-1])
+    pvals_poly = np.array(summary_poly.pValues[:-1])
+    se_method_poly = "exact"
+except Exception:
+    train_pred_poly = lr_poly_model.transform(train_clean_poly)
+    n_poly  = train_pred_poly.count()
+    rss_poly = train_pred_poly.selectExpr(
+        "sum(pow(`" + target_col + "` - prediction, 2)) as rss"
+    ).collect()[0]["rss"]
+    mse_poly = rss_poly / max(n_poly - n_feats_poly - 1, 1)
+    se_poly    = np.full(n_feats_poly, np.sqrt(mse_poly / n_poly))
+    tvals_poly = coefs_poly / se_poly
+    pvals_poly = 2 * (1 - stats.t.cdf(np.abs(tvals_poly), df=n_poly - n_feats_poly - 1))
+    se_method_poly = "approximated"
+
+meta_poly  = train_clean_poly.schema["features_poly"].metadata
+attrs_poly = meta_poly.get("ml_attr", {}).get("attrs", {})
+name_map_poly = {}
+for attr_type, attr_list in attrs_poly.items():
+    for attr in attr_list:
+        name_map_poly[attr["idx"]] = attr["name"]
+feature_names_poly = [name_map_poly.get(i, "feature_" + str(i)) for i in range(n_feats_poly)]
+
+ci_lower_poly = coefs_poly - 1.96 * se_poly
+ci_upper_poly = coefs_poly + 1.96 * se_poly
+
+coef_df_poly = pd.DataFrame({
+    "Feature"     : feature_names_poly,
+    "Coefficient" : coefs_poly.round(4),
+    "Std Error"   : se_poly.round(4),
+    "t-value"     : tvals_poly.round(4),
+    "p-value"     : pvals_poly.round(4),
+    "CI Lower"    : ci_lower_poly.round(4),
+    "CI Upper"    : ci_upper_poly.round(4),
+    "Significant" : ["Yes" if p < 0.05 else "No" for p in pvals_poly],
+})
+
+top15_poly = coef_df_poly.reindex(
+    coef_df_poly["Coefficient"].abs().sort_values(ascending=False).index
+).head(15)
+print("Top 15 features by absolute coefficient (Polynomial LR):")
+print(top15_poly.to_string(index=False))
+
+sig_poly = (coef_df_poly["Significant"] == "Yes").sum()
+print("\nPolynomial LR Performance:")
+print("  R2   =", round(r2_poly, 4))
+print("  RMSE =", round(rmse_poly, 2))
+print("  MAE  =", round(mae_poly, 2))
+print(str(sig_poly) + " of " + str(n_feats_poly) + " features significant (p < 0.05)")
+print("SE method:", se_method_poly)
+```
+
+
+###  Random Forest Regressor
+```{python}
+from pyspark.ml.regression import RandomForestRegressor
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.sql.functions import udf, col, isnan
+from pyspark.sql.types import BooleanType
+import numpy as np
+import pandas as pd
+import math
+import os
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+boolean_cols = ["IS_INTERNSHIP", "COMPANY_IS_STAFFING"]
+
+# NaN guard
+@udf(BooleanType())
+def has_nan_or_inf(v):
+    if v is None:
+        return True
+    return any(math.isnan(x) or math.isinf(x) for x in v.toArray())
+
+train_rf = train_df.filter(
+    col(target_col).isNotNull() & ~isnan(col(target_col))
+).filter(~has_nan_or_inf(col("features")))
+
+test_rf = test_df.filter(
+    col(target_col).isNotNull() & ~isnan(col(target_col))
+).filter(~has_nan_or_inf(col("features")))
+
+print("Train rows:", train_rf.count())
+print("Test  rows:", test_rf.count())
+
+# Hyperparameter note:
+# numTrees and maxDepth are inversely proportional.
+# More trees → each can be shallower (less variance per tree, ensemble corrects).
+# Fewer trees → each needs more depth to capture complexity.
+# numTrees=200, maxDepth=6 is a balanced mid-range choice.
+rf = RandomForestRegressor(
+    featuresCol="features",
+    labelCol=target_col,
+    numTrees=200,
+    maxDepth=6,
+    seed=42
+)
+rf_model = rf.fit(train_rf)
+
+# Evaluate
+predictions = rf_model.transform(test_rf)
+
+evaluator = RegressionEvaluator(labelCol=target_col, predictionCol="prediction")
+r2   = evaluator.setMetricName("r2").evaluate(predictions)
+rmse = evaluator.setMetricName("rmse").evaluate(predictions)
+mae  = evaluator.setMetricName("mae").evaluate(predictions)
+
+print("R2   :", round(r2, 4))
+print("RMSE :", round(rmse, 2))
+print("MAE  :", round(mae, 2))
+
+# Feature importances
+importances = rf_model.featureImportances.toArray()
+n_feats     = len(importances)
+
+# Feature names from VectorAssembler metadata
+meta  = train_rf.schema["features"].metadata
+attrs = meta.get("ml_attr", {}).get("attrs", {})
+
+name_map = {}
+for attr_type, attr_list in attrs.items():
+    for attr in attr_list:
+        name_map[attr["idx"]] = attr["name"]
+
+feature_names = [name_map.get(i, "feature_" + str(i)) for i in range(n_feats)]
+
+importance_df = pd.DataFrame({
+    "Feature"    : feature_names,
+    "Importance" : importances.round(6),
+}).sort_values("Importance", ascending=False).reset_index(drop=True)
+
+print("\nTop 10 Feature Importances:")
+print(importance_df.head(10).to_string(index=False))
+
+# Seaborn bar plot — top 10
+top10 = importance_df.head(10)
+
+os.makedirs("_output", exist_ok=True)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.barplot(data=top10, x="Importance", y="Feature", palette="Blues_r", ax=ax)
+
+ax.set_title("Top 10 Feature Importances — Random Forest Regressor",
+             fontsize=14, fontweight="bold", pad=12)
+ax.set_xlabel("Importance Score", fontsize=11)
+ax.set_ylabel("Feature", fontsize=11)
+ax.tick_params(labelsize=10)
+
+for i, val in enumerate(top10["Importance"]):
+    ax.text(val + 0.0005, i, str(round(val, 4)), va="center", fontsize=9)
+
+sns.despine()
+plt.tight_layout()
+
+output_path = "_output/rf_feature_importance.png"
+plt.savefig(output_path, dpi=150, bbox_inches="tight")
+plt.show()
+print("Saved:", output_path)
+
+print("\nModel Performance:")
+print("  R2   =", round(r2, 4), "-> explains", str(round(r2 * 100, 1)) + "% of variance in salary")
+print("  RMSE =", round(rmse, 2))
+print("  MAE  =", round(mae, 2))
+print("  Trees:", 200, "| Max Depth:", 6)
+```
+
+
+
+
+###  Compare 3 Models
+```{python}
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.sql.functions import col, rand
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import math
+import os
+
+# Use the same test sets each model was trained and evaluated against.
+# Do NOT re-filter test_df here — that can produce a different feature vector
+# if the FE cell was re-run after the models were fitted.
+lr_preds   = lr_model.transform(test_clean)           # features  (from LR cell)
+poly_preds = lr_poly_model.transform(test_clean_poly)                                                  # features_poly (from Poly cell)
+rf_preds   = rf_model.transform(test_rf)              # features  (from RF cell)
+
+# Metrics
+evaluator = RegressionEvaluator(labelCol=target_col, predictionCol="prediction")
+
+rmse_lr   = evaluator.setMetricName("rmse").evaluate(lr_preds)
+rmse_poly = evaluator.setMetricName("rmse").evaluate(poly_preds)
+rmse_rf   = evaluator.setMetricName("rmse").evaluate(rf_preds)
+
+# AIC  = n·ln(RSS/n) + 2·(k+1)       where k = n_coefficients, +1 for intercept
+# BIC  = n·ln(RSS/n) + (k+1)·ln(n)
+
+def compute_aic_bic(model, train_data, label_col):
+    n   = train_data.count()
+    k   = len(model.coefficients) + 1
+    rss = (
+        model.transform(train_data)
+             .selectExpr(
+                 "sum(pow(`" + label_col + "` - prediction, 2)) as rss"
+             )
+             .collect()[0]["rss"]
+    )
+    aic = n * math.log(rss / n) + 2 * k
+    bic = n * math.log(rss / n) + k * math.log(n)
+    return round(aic, 2), round(bic, 2)
+
+# train_clean must be the filtered train set used to fit lr_model (features col)
+# train_clean_poly is the filtered train set used to fit lr_poly_model (features_poly col)
+aic_lr,   bic_lr   = compute_aic_bic(lr_model,      train_clean,      target_col)
+aic_poly, bic_poly = compute_aic_bic(lr_poly_model, train_clean_poly, target_col)
+metrics_df = pd.DataFrame({
+    "Model" : ["Linear Regression", "Polynomial LR", "Random Forest"],
+    "RMSE"  : [round(rmse_lr, 2),   round(rmse_poly, 2),   round(rmse_rf, 2)],
+    "AIC"   : [round(aic_lr, 2),    round(aic_poly, 2),    "N/A"],
+    "BIC"   : [round(bic_lr, 2),    round(bic_poly, 2),    "N/A"],
+})
+print(metrics_df.to_string(index=False))
+
+# Collect random sample to pandas for plotting
+def sample_to_pandas(spark_df, label_col, n=5000):
+    return (
+        spark_df
+        .select(col(label_col).alias("actual"), col("prediction").alias("predicted"))
+        .orderBy(rand(seed=42))
+        .limit(n)
+        .toPandas()
+    )
+
+lr_pdf   = sample_to_pandas(lr_preds,   target_col)
+poly_pdf = sample_to_pandas(poly_preds, target_col)
+rf_pdf   = sample_to_pandas(rf_preds,   target_col)
+
+# 2x2 Grid Plot
+fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+fig.suptitle("Actual vs Predicted Salary — Model Comparison",
+             fontsize=16, fontweight="bold", y=1.01)
+
+panels = [
+    (axes[0, 0], lr_pdf,   "Linear Regression",  rmse_lr,   "#2196F3"),
+    (axes[0, 1], poly_pdf, "Polynomial LR",       rmse_poly, "#9C27B0"),
+    (axes[1, 0], rf_pdf,   "Random Forest",       rmse_rf,   "#4CAF50"),
+]
+
+for ax, pdf, title, rmse, color in panels:
+    sns.scatterplot(
+        data=pdf, x="actual", y="predicted",
+        alpha=0.25, s=12, color=color, ax=ax, linewidth=0
+    )
+    mn = min(pdf["actual"].min(), pdf["predicted"].min())
+    mx = max(pdf["actual"].max(), pdf["predicted"].max())
+    ax.plot([mn, mx], [mn, mx], "r--", linewidth=1.5, label="Perfect fit")
+    ax.set_title(title + "\nRMSE: " + str(round(rmse, 2)),
+                 fontsize=12, fontweight="bold")
+    ax.set_xlabel("Actual Salary", fontsize=10)
+    ax.set_ylabel("Predicted Salary", fontsize=10)
+    ax.legend(fontsize=9)
+    sns.despine(ax=ax)
+
+# Panel 4: RMSE bar chart
+ax4          = axes[1, 1]
+model_labels = ["Linear\nRegression", "Polynomial\nLR", "Random\nForest"]
+rmse_vals    = [round(rmse_lr, 2), round(rmse_poly, 2), round(rmse_rf, 2)]
+bar_colors   = ["#2196F3", "#9C27B0", "#4CAF50"]
+
+bars = ax4.bar(model_labels, rmse_vals, color=bar_colors, edgecolor="white", width=0.5)
+for bar, val in zip(bars, rmse_vals):
+    ax4.text(
+        bar.get_x() + bar.get_width() / 2,
+        bar.get_height() + max(rmse_vals) * 0.01,
+        str(val), ha="center", va="bottom", fontsize=11, fontweight="bold"
+    )
+ax4.set_title("RMSE Comparison", fontsize=12, fontweight="bold")
+ax4.set_ylabel("RMSE (lower is better)", fontsize=10)
+ax4.set_ylim(0, max(rmse_vals) * 1.2)
+sns.despine(ax=ax4)
+
+plt.tight_layout()
+os.makedirs("_output", exist_ok=True)
+plt.savefig("_output/model_comparison.png", dpi=150, bbox_inches="tight")
+plt.show()
+print("Saved: _output/model_comparison.png")
 ```
