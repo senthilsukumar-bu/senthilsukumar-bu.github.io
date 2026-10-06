@@ -6,9 +6,73 @@ execute:
   freeze: true 
 ---
 
-This is a Quarto website.
+ ### Senthil Sukumar
+ ![](./images/profile.jpg){fig-align="center" width="75%"}
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+:::{.sub}
+### Business Intelligence and Analytics Professional
+:::
 
-![](./images/sw_bg.jpg){fig-align="center" width="75%"}
+:::{.hero-links}
+[LinkedIn](https://www.linkedin.com/in/senthilca/) · [GitHub](senthilsukumar-bu.github.io) · [Email](mailto:senthilsukumar.87@email.com)
 
+---
+
+
+:::{.section}
+:::{.container-narrow}
+
+:::{.section-title}
+### About Me
+:::
+:::{.section-divider}
+:::
+
+Thanks for stopping by. 
+
+My name is Senthil.
+
+I was born and raised in Singapore, and call California my home. I currently live in Seoul together with my wife and daughter for work.
+
+I'm a seasoned Business Intelligence and Analytics leader with over a decade of experience at big companies like Google and Coupang. I’ve worked in all sorts of industries such as tech, aviation, e-commerce, video streaming and advertising where I developed, launched and/or scaled almost all facets of enterprise data ops such as:
+
+- Helpful analytics and data engineering teams
+- System observability and monitoring
+- Data capture and warehousing systems
+- Production-grade data pipelines
+- Metric and data governance
+- Product and user analytics
+- Business and revenue forecasts
+- Sales and Revenue Operations
+
+---
+
+### Interests
+
+:::{.interest-grid}
+
+:::{.interest-tile}
+#### 📊 Data Engineering
+Designing robust pipelines with PySpark, dbt, and AWS to power reliable analytics at scale.
+:::
+
+:::{.interest-tile}
+#### 🤖 Machine Learning
+Applying predictive models to labour market and consumer behaviour data.
+:::
+
+:::{.interest-tile}
+#### 📈 Business Intelligence
+Building KPI frameworks and self-service dashboards for non-technical stakeholders.
+:::
+
+:::
+
+---
+
+### Career Goals
+
+I am seeking roles at the intersection of data engineering and business intelligence — where I can apply modern cloud tooling to help organisations become genuinely data-driven. I am particularly interested in technology, financial services, and healthcare sectors.
+
+:::
+:::
