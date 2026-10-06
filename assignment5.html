@@ -182,7 +182,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="assignment-2---load-data-into-spark-create-tables-and-queries" class="level2">
 <h2 class="anchored" data-anchor-id="assignment-2---load-data-into-spark-create-tables-and-queries">Assignment 2 - Load data into Spark, Create Tables and Queries</h2>
-<div id="638738ba" class="cell" data-execution_count="1">
+<div id="a09fe014" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
@@ -217,6 +217,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>df.printSchema() <span class="co"># comment this line when rendering the submission</span></span>
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>df.show(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+                                                                                </code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>---This is Diagnostic check, No need to print it in the final doc---
 root
@@ -242,6 +246,242 @@ root
 |         |           |{'min': '', 'max'...|                   0|                   1|        | ["Associate's deg...|           Full Time|         Unknown|            0|                  0|
 +---------+-----------+--------------------+--------------------+--------------------+--------+---------------------+--------------------+----------------+-------------+-------------------+
 only showing top 5 rows</code></pre>
+</div>
+</div>
+<div id="58415f7f" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml <span class="im">import</span> Pipeline</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.feature <span class="im">import</span> StringIndexer, OneHotEncoder, VectorAssembler</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> functions <span class="im">as</span> F   <span class="co"># ← add this line</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Feature selection </span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>continuous_cols <span class="op">=</span> [</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SALARY_FROM"</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MAX_YEARS_EXPERIENCE"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DURATION"</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MIN_YEARS_EXPERIENCE"</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>categorical_cols <span class="op">=</span> [</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"REMOTE_TYPE_NAME"</span>,      <span class="co"># Remote / On-site / Hybrid</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EMPLOYMENT_TYPE_NAME"</span>,  <span class="co"># Full-time / Part-time / Contract</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>target_col <span class="op">=</span> <span class="st">"SALARY"</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>key_cols <span class="op">=</span> [target_col] <span class="op">+</span> continuous_cols <span class="op">+</span> categorical_cols</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop nulls </span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>df_clean <span class="op">=</span> df.dropna(subset<span class="op">=</span>key_cols)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace empty strings in categorical columns</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> categorical_cols:</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    df_clean <span class="op">=</span> df_clean.withColumn(</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        c, F.when(F.trim(F.col(c)) <span class="op">==</span> <span class="st">""</span>, <span class="va">None</span>).otherwise(F.col(c))</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Cast continuous columns + target to double</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> continuous_cols <span class="op">+</span> [target_col]:</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    df_clean <span class="op">=</span> df_clean.withColumn(c, F.expr(<span class="ss">f"try_cast(`</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">` as double)"</span>))</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop rows that became null after casting</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>df_clean <span class="op">=</span> df_clean.dropna(subset<span class="op">=</span>key_cols)</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>df_clean.groupBy(<span class="st">"EDUCATION_LEVELS_NAME"</span>).count().show()</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>df_clean.groupBy(<span class="st">"EMPLOYMENT_TYPE_NAME"</span>).count().show()</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>df_clean.groupBy(<span class="st">"REMOTE_TYPE_NAME"</span>).count().show()</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Rows before cleaning : </span><span class="sc">{</span>df<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Rows after  cleaning : </span><span class="sc">{</span>df_clean<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>df_clean.groupBy(<span class="st">"EDUCATION_LEVELS_NAME"</span>).count().show()</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>df_clean.groupBy(<span class="st">"EMPLOYMENT_TYPE_NAME"</span>).count().show()</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>df_clean.groupBy(<span class="st">"REMOTE_TYPE_NAME"</span>).count().show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 16:================&gt;                                        (5 + 2) / 17]
+
+[Stage 16:====================&gt;                                    (6 + 2) / 17]
+
+[Stage 16:==========================&gt;                              (8 + 2) / 17]
+
+[Stage 16:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 16:================================&gt;                       (10 + 2) / 17]
+
+[Stage 16:====================================&gt;                   (11 + 2) / 17]
+
+[Stage 16:==========================================&gt;             (13 + 2) / 17]
+
+[Stage 16:==============================================&gt;         (14 + 2) / 17]
+
+[Stage 16:=================================================&gt;      (15 + 2) / 17]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+---------------------+-----+
+|EDUCATION_LEVELS_NAME|count|
++---------------------+-----+
++---------------------+-----+
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 17:=============&gt;                                           (4 + 2) / 17]
+
+[Stage 17:====================&gt;                                    (6 + 2) / 17]
+
+[Stage 17:=======================&gt;                                 (7 + 2) / 17]
+
+[Stage 17:==========================&gt;                              (8 + 2) / 17]
+
+[Stage 17:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 17:====================================&gt;                   (11 + 2) / 17]
+
+[Stage 17:=======================================&gt;                (12 + 2) / 17]
+
+[Stage 17:==============================================&gt;         (14 + 2) / 17]
+
+[Stage 17:=================================================&gt;      (15 + 2) / 17]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+--------------------+-----+
+|EMPLOYMENT_TYPE_NAME|count|
++--------------------+-----+
++--------------------+-----+
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 18:=============&gt;                                           (4 + 2) / 17]
+
+[Stage 18:================&gt;                                        (5 + 2) / 17]
+
+[Stage 18:=======================&gt;                                 (7 + 2) / 17]
+
+[Stage 18:==========================&gt;                              (8 + 2) / 17]
+
+[Stage 18:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 18:====================================&gt;                   (11 + 2) / 17]
+
+[Stage 18:==========================================&gt;             (13 + 2) / 17]
+
+[Stage 18:=================================================&gt;      (15 + 2) / 17]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+----------------+-----+
+|REMOTE_TYPE_NAME|count|
++----------------+-----+
++----------------+-----+
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows before cleaning : 865,193</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 22:==========&gt;                                              (3 + 2) / 17]
+
+[Stage 22:=============&gt;                                           (4 + 2) / 17]
+
+[Stage 22:=============&gt;                                           (4 + 3) / 17]
+
+[Stage 22:=======================&gt;                                 (7 + 2) / 17]
+
+[Stage 22:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 22:================================&gt;                       (10 + 2) / 17]
+
+[Stage 22:====================================&gt;                   (11 + 2) / 17]
+
+[Stage 22:==============================================&gt;         (14 + 2) / 17]
+
+[Stage 22:====================================================&gt;   (16 + 1) / 17]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows after  cleaning : 0</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 25:=============&gt;                                           (4 + 2) / 17]
+
+[Stage 25:=======================&gt;                                 (7 + 2) / 17]
+
+[Stage 25:==========================&gt;                              (8 + 2) / 17]
+
+[Stage 25:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 25:================================&gt;                       (10 + 2) / 17]
+
+[Stage 25:=======================================&gt;                (12 + 2) / 17]
+
+[Stage 25:==========================================&gt;             (13 + 2) / 17]
+
+[Stage 25:==============================================&gt;         (14 + 2) / 17]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+---------------------+-----+
+|EDUCATION_LEVELS_NAME|count|
++---------------------+-----+
++---------------------+-----+
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 26:================&gt;                                        (5 + 2) / 17]
+
+[Stage 26:==========================&gt;                              (8 + 2) / 17]
+
+[Stage 26:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 26:================================&gt;                       (10 + 2) / 17]
+
+[Stage 26:=======================================&gt;                (12 + 2) / 17]
+
+[Stage 26:==========================================&gt;             (13 + 2) / 17]
+
+[Stage 26:==============================================&gt;         (14 + 2) / 17]
+
+[Stage 26:====================================================&gt;   (16 + 1) / 17]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+--------------------+-----+
+|EMPLOYMENT_TYPE_NAME|count|
++--------------------+-----+
++--------------------+-----+
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 27:=============&gt;                                           (4 + 2) / 17]
+
+[Stage 27:================&gt;                                        (5 + 2) / 17]
+
+[Stage 27:=======================&gt;                                 (7 + 2) / 17]
+
+[Stage 27:==========================&gt;                              (8 + 2) / 17]
+
+[Stage 27:==============================&gt;                          (9 + 2) / 17]
+
+[Stage 27:====================================&gt;                   (11 + 2) / 17]
+
+[Stage 27:=======================================&gt;                (12 + 2) / 17]
+
+[Stage 27:==========================================&gt;             (13 + 2) / 17]
+
+[Stage 27:=================================================&gt;      (15 + 2) / 17]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+----------------+-----+
+|REMOTE_TYPE_NAME|count|
++----------------+-----+
++----------------+-----+
+</code></pre>
 </div>
 </div>
 
