@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>assignment5 – Senthil Sukumar</title>
+<title>Assignment 5 – Senthil Sukumar</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -25,6 +25,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -114,17 +149,836 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#assignment-5---load-data-into-spark-create-tables-and-queries" id="toc-assignment-5---load-data-into-spark-create-tables-and-queries" class="nav-link active" data-scroll-target="#assignment-5---load-data-into-spark-create-tables-and-queries">Assignment 5 - Load data into Spark, Create Tables and Queries</a></li>
+  <li><a href="#feature-engineering-and-traintest-split" id="toc-feature-engineering-and-traintest-split" class="nav-link" data-scroll-target="#feature-engineering-and-traintest-split">Feature Engineering and Train/Test split</a>
+  <ul class="collapse">
+  <li><a href="#linear-regression" id="toc-linear-regression" class="nav-link" data-scroll-target="#linear-regression">Linear Regression</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Assignment 5</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
 
 
+</header>
 
+
+<section id="assignment-5---load-data-into-spark-create-tables-and-queries" class="level2">
+<h2 class="anchored" data-anchor-id="assignment-5---load-data-into-spark-create-tables-and-queries">Assignment 5 - Load data into Spark, Create Tables and Queries</h2>
+<div id="94fbcfdc" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.io <span class="im">as</span> pio</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>pio.renderers.default <span class="op">=</span> <span class="st">"notebook+notebook_connected+vscode"</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize Spark Session</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>spark <span class="op">=</span> SparkSession.builder.appName(<span class="st">"CareerCompassData"</span>).getOrCreate()</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Load Data (all 17 Parquet partition files)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> Path(<span class="st">"./Jobs_2026"</span>)  </span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>parquet_files <span class="op">=</span> <span class="bu">sorted</span>(data_dir.glob(<span class="st">"*.parquet"</span>))</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> spark.read.parquet(<span class="op">*</span>[<span class="bu">str</span>(path) <span class="cf">for</span> path <span class="kw">in</span> parquet_files])</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>model_source_cols <span class="op">=</span> [</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SALARY_TO"</span>, <span class="st">"SALARY_FROM"</span>, <span class="st">"SALARY"</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MIN_YEARS_EXPERIENCE"</span>, <span class="st">"MAX_YEARS_EXPERIENCE"</span>, <span class="st">"DURATION"</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EDUCATION_LEVELS_NAME"</span>, <span class="st">"EMPLOYMENT_TYPE_NAME"</span>, <span class="st">"REMOTE_TYPE_NAME"</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"IS_INTERNSHIP"</span>, <span class="st">"COMPANY_IS_STAFFING"</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.select(<span class="op">*</span>model_source_cols)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Show Schema and Sample Data</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"---This is Diagnostic check, No need to print it in the final doc---"</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>df.printSchema() <span class="co"># comment this line when rendering the submission</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>df.show(<span class="dv">5</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df.groupBy(<span class="st">"EDUCATION_LEVELS_NAME"</span>).count().show()</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>df.groupBy(<span class="st">"EMPLOYMENT_TYPE_NAME"</span>).count().show()</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>df.groupBy(<span class="st">"REMOTE_TYPE_NAME"</span>).count().show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---This is Diagnostic check, No need to print it in the final doc---
+root
+ |-- SALARY_TO: string (nullable = true)
+ |-- SALARY_FROM: string (nullable = true)
+ |-- SALARY: string (nullable = true)
+ |-- MIN_YEARS_EXPERIENCE: string (nullable = true)
+ |-- MAX_YEARS_EXPERIENCE: string (nullable = true)
+ |-- DURATION: string (nullable = true)
+ |-- EDUCATION_LEVELS_NAME: string (nullable = true)
+ |-- EMPLOYMENT_TYPE_NAME: string (nullable = true)
+ |-- REMOTE_TYPE_NAME: string (nullable = true)
+ |-- IS_INTERNSHIP: byte (nullable = true)
+ |-- COMPANY_IS_STAFFING: byte (nullable = true)
+
++---------+-----------+--------------------+--------------------+--------------------+--------+---------------------+--------------------+----------------+-------------+-------------------+
+|SALARY_TO|SALARY_FROM|              SALARY|MIN_YEARS_EXPERIENCE|MAX_YEARS_EXPERIENCE|DURATION|EDUCATION_LEVELS_NAME|EMPLOYMENT_TYPE_NAME|REMOTE_TYPE_NAME|IS_INTERNSHIP|COMPANY_IS_STAFFING|
++---------+-----------+--------------------+--------------------+--------------------+--------+---------------------+--------------------+----------------+-------------+-------------------+
+|         |           |                    |                   0|                   1|        | ["Bachelor's degr...|                    |         Unknown|            0|                  0|
+|         |           |{'min': '', 'max'...|                   0|                   1|        | ["Associate's deg...|           Full Time|         Unknown|            0|                  0|
+|         |           |                    |                   0|                   1|        | ["Bachelor's degr...|                    |         Unknown|            0|                  0|
+|         |           |{'min': '', 'max'...|                   0|                   1|        | ["Associate's deg...|           Full Time|         On-site|            0|                  0|
+|         |           |{'min': '', 'max'...|                   0|                   1|        | ["Associate's deg...|           Full Time|         Unknown|            0|                  0|
++---------+-----------+--------------------+--------------------+--------------------+--------+---------------------+--------------------+----------------+-------------+-------------------+
+only showing top 5 rows</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 63:==========================================&gt;             (12 + 2) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+---------------------+-----+
+|EDUCATION_LEVELS_NAME|count|
++---------------------+-----+
+| ["High school dip...|   39|
+| ["Bachelor's degr...| 7095|
+| ["Bachelor's degr...|  482|
+| ["Postsecondary n...|    3|
+| ["High school dip...|   59|
+| ["Doctoral or pro...| 4954|
+| ["High school dip...|   43|
+| ["High school dip...|  124|
+| ["High school dip...|  826|
+| ["Associate's deg...|  239|
+| ["Postsecondary n...|  107|
+| ["High school dip...|   22|
+| ["High school dip...|    1|
+| ["Associate's deg...| 5099|
+| ["High school dip...|  134|
+| ["High school dip...|    9|
+| ["Postsecondary n...|  204|
+| ["Associate's deg...|12276|
+| ["Postsecondary n...| 3898|
+| ["High school dip...|    1|
++---------------------+-----+
+only showing top 20 rows</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 66:===================================&gt;                    (10 + 2) / 16]
+
+[Stage 66:=================================================&gt;      (14 + 2) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+--------------------+------+
+|EMPLOYMENT_TYPE_NAME| count|
++--------------------+------+
+|Part Time, Intern...|     2|
+|Full Time, Contra...|    39|
+|              Remote|  1545|
+|Full Time, Part T...|    10|
+|Full Time, Part Time| 33088|
+|Part Time, Contra...|   260|
+|Full Time, Contra...|   296|
+|           Part Time| 68048|
+|Per Diem, Full Ti...|     1|
+| Full Time, Contract| 14244|
+|Part Time, Contra...|     6|
+|            Director|     6|
+|Full Time, Part T...|     1|
+|Full Time, Intern...|  2626|
+|Full Time, Tempor...|    44|
+|                NULL|202612|
+|Full Time, Tempor...|   354|
+|Part Time, Tempor...|    11|
+|Full Time, Part T...|    57|
+|Full Time, Contra...|   954|
++--------------------+------+
+only showing top 20 rows</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 69:==========================================&gt;             (12 + 2) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>+----------------+------+
+|REMOTE_TYPE_NAME| count|
++----------------+------+
+|         On-site| 71686|
+|          Remote| 52653|
+|         Unknown|448911|
+|          Hybrid| 48197|
+|          Onsite| 26614|
+|            NULL|167132|
++----------------+------+
+</code></pre>
+</div>
+</div>
+</section>
+<section id="feature-engineering-and-traintest-split" class="level2">
+<h2 class="anchored" data-anchor-id="feature-engineering-and-traintest-split">Feature Engineering and Train/Test split</h2>
+<div id="77374507" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml <span class="im">import</span> Pipeline</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.feature <span class="im">import</span> StringIndexer, OneHotEncoder, VectorAssembler</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> functions <span class="im">as</span> F</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Feature selection ─────────────────────────────────────────────────────────</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>continuous_cols <span class="op">=</span> [</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SALARY_FROM"</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MAX_YEARS_EXPERIENCE"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DURATION"</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MIN_YEARS_EXPERIENCE"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>categorical_cols <span class="op">=</span> [</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"REMOTE_TYPE_NAME"</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EMPLOYMENT_TYPE_NAME"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>target_col <span class="op">=</span> <span class="st">"SALARY_FROM"</span>   <span class="co"># ← use SALARY_FROM (cleaner numeric) as target</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co"># ── 1. Cast all continuous cols to double (tolerate bad strings) ──────────────</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>df_clean <span class="op">=</span> df</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> continuous_cols:</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    df_clean <span class="op">=</span> df_clean.withColumn(c, F.expr(<span class="ss">f"try_cast(`</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">` as double)"</span>))</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># ── 2. Replace empty strings in categoricals ──────────────────────────────────</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> categorical_cols:</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    df_clean <span class="op">=</span> df_clean.withColumn(</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>        c, F.when(F.trim(F.col(c)) <span class="op">==</span> <span class="st">""</span>, <span class="va">None</span>).otherwise(F.col(c))</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="co"># ── 3. Only require target + MIN_YEARS_EXPERIENCE to be non-null ──────────────</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>df_clean <span class="op">=</span> df_clean.dropna(subset<span class="op">=</span>[target_col, <span class="st">"MIN_YEARS_EXPERIENCE"</span>])</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Rows in raw data     : </span><span class="sc">{</span>df<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Rows after cleaning  : </span><span class="sc">{</span>df_clean<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="co"># ── StringIndexer + OneHotEncoder ─────────────────────────────────────────────</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>indexers <span class="op">=</span> [</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    StringIndexer(inputCol<span class="op">=</span>c, outputCol<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">_idx"</span>, handleInvalid<span class="op">=</span><span class="st">"keep"</span>)</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> categorical_cols</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>encoders <span class="op">=</span> [</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>    OneHotEncoder(inputCol<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">_idx"</span>, outputCol<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">_ohe"</span>)</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> categorical_cols</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>ohe_cols <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">_ohe"</span> <span class="cf">for</span> c <span class="kw">in</span> categorical_cols]</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a><span class="co"># ── VectorAssembler (handleInvalid="keep" fills missing features with 0) ──────</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>assembler <span class="op">=</span> VectorAssembler(</span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>    inputCols<span class="op">=</span>continuous_cols <span class="op">+</span> ohe_cols,</span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>    outputCol<span class="op">=</span><span class="st">"features"</span>,</span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>    handleInvalid<span class="op">=</span><span class="st">"keep"</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Pipeline ──────────────────────────────────────────────────────────────────</span></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>pipeline_model <span class="op">=</span> Pipeline(stages<span class="op">=</span>indexers <span class="op">+</span> encoders <span class="op">+</span> [assembler]).fit(df_clean)</span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>df_featured <span class="op">=</span> pipeline_model.transform(df_clean)</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Polynomial feature: MIN_YEARS_EXPERIENCE² ─────────────────────────────────</span></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>df_featured <span class="op">=</span> df_featured.withColumn(</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MIN_YEARS_EXPERIENCE_SQ"</span>,</span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>    F.<span class="bu">pow</span>(F.col(<span class="st">"MIN_YEARS_EXPERIENCE"</span>), <span class="dv">2</span>)</span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Assemble polynomial features ──────────────────────────────────────────────</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>poly_assembler <span class="op">=</span> VectorAssembler(</span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>    inputCols<span class="op">=</span>continuous_cols <span class="op">+</span> [<span class="st">"MIN_YEARS_EXPERIENCE_SQ"</span>] <span class="op">+</span> ohe_cols,</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>    outputCol<span class="op">=</span><span class="st">"features_poly"</span>,</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>    handleInvalid<span class="op">=</span><span class="st">"keep"</span></span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>df_poly <span class="op">=</span> poly_assembler.transform(df_featured)</span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Train/test split ──────────────────────────────────────────────────────────</span></span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a>train_df, test_df <span class="op">=</span> df_poly.randomSplit([<span class="fl">0.8</span>, <span class="fl">0.2</span>], seed<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Training rows : </span><span class="sc">{</span>train_df<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Testing  rows : </span><span class="sc">{</span>test_df<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Show final structure ──────────────────────────────────────────────────────</span></span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a>show_cols <span class="op">=</span> [target_col] <span class="op">+</span> continuous_cols <span class="op">+</span> categorical_cols <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a>            [<span class="st">"MIN_YEARS_EXPERIENCE_SQ"</span>, <span class="st">"features"</span>, <span class="st">"features_poly"</span>]</span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a>df_poly.select(<span class="op">*</span>show_cols).printSchema()</span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a>df_poly.select(<span class="op">*</span>show_cols).show(<span class="dv">5</span>, truncate<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 72:=============================================&gt;          (13 + 2) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows in raw data     : 815,193</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 75:========================&gt;                                (7 + 2) / 16]
+
+[Stage 75:================================&gt;                        (9 + 2) / 16]
+
+[Stage 75:==========================================&gt;             (12 + 2) / 16]
+
+[Stage 75:====================================================&gt;   (15 + 1) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows after cleaning  : 56,089</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 78:=====================&gt;                                   (6 + 2) / 16]
+
+[Stage 78:================================&gt;                        (9 + 2) / 16]
+
+[Stage 78:=============================================&gt;          (13 + 2) / 16]
+
+[Stage 78:====================================================&gt;   (15 + 1) / 16]
+
+                                                                                
+
+[Stage 84:==============&gt;                                          (4 + 2) / 16]
+
+[Stage 84:=====================&gt;                                   (6 + 2) / 16]
+
+[Stage 84:============================&gt;                            (8 + 2) / 16]
+
+[Stage 84:================================&gt;                        (9 + 2) / 16]
+
+[Stage 84:======================================&gt;                 (11 + 2) / 16]
+
+[Stage 84:=================================================&gt;      (14 + 2) / 16]
+
+                                                                                
+
+[Stage 90:=======&gt;                                                 (2 + 2) / 16]
+
+[Stage 90:==========&gt;                                              (3 + 2) / 16]
+
+[Stage 90:==============&gt;                                          (4 + 2) / 16]
+
+[Stage 90:=====================&gt;                                   (6 + 2) / 16]
+
+[Stage 90:============================&gt;                            (8 + 2) / 16]
+
+[Stage 90:================================&gt;                        (9 + 2) / 16]
+
+[Stage 90:======================================&gt;                 (11 + 2) / 16]
+
+[Stage 90:=============================================&gt;          (13 + 2) / 16]
+
+[Stage 90:====================================================&gt;   (15 + 1) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Training rows : 45,046</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 93:==========&gt;                                              (3 + 2) / 16]
+
+[Stage 93:==============&gt;                                          (4 + 2) / 16]
+
+[Stage 93:=================&gt;                                       (5 + 2) / 16]
+
+[Stage 93:========================&gt;                                (7 + 2) / 16]
+
+[Stage 93:============================&gt;                            (8 + 2) / 16]
+
+[Stage 93:================================&gt;                        (9 + 2) / 16]
+
+[Stage 93:======================================&gt;                 (11 + 2) / 16]
+
+[Stage 93:=============================================&gt;          (13 + 2) / 16]
+
+[Stage 93:=================================================&gt;      (14 + 2) / 16]
+
+[Stage 93:====================================================&gt;   (15 + 1) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Testing  rows : 11,043
+root
+ |-- SALARY_FROM: double (nullable = true)
+ |-- SALARY_FROM: double (nullable = true)
+ |-- MAX_YEARS_EXPERIENCE: double (nullable = true)
+ |-- DURATION: double (nullable = true)
+ |-- MIN_YEARS_EXPERIENCE: double (nullable = true)
+ |-- REMOTE_TYPE_NAME: string (nullable = true)
+ |-- EMPLOYMENT_TYPE_NAME: string (nullable = true)
+ |-- MIN_YEARS_EXPERIENCE_SQ: double (nullable = true)
+ |-- features: vector (nullable = true)
+ |-- features_poly: vector (nullable = true)
+
++-----------+-----------+--------------------+--------+--------------------+----------------+--------------------+-----------------------+--------------------+--------------------+
+|SALARY_FROM|SALARY_FROM|MAX_YEARS_EXPERIENCE|DURATION|MIN_YEARS_EXPERIENCE|REMOTE_TYPE_NAME|EMPLOYMENT_TYPE_NAME|MIN_YEARS_EXPERIENCE_SQ|            features|       features_poly|
++-----------+-----------+--------------------+--------+--------------------+----------------+--------------------+-----------------------+--------------------+--------------------+
+|    71000.0|    71000.0|                NULL|    NULL|                 3.0|          Remote|Full Time, Temporary|                    9.0|(138,[0,1,2,3,5,2...|(139,[0,1,2,3,4,6...|
+|   117000.0|   117000.0|                NULL|    NULL|                 5.0|          Remote|           Full Time|                   25.0|(138,[0,1,2,3,5,9...|(139,[0,1,2,3,4,6...|
+|    95000.0|    95000.0|                NULL|    NULL|                 5.0|         On-site| Full Time, Contract|                   25.0|(138,[0,1,2,3,8,1...|(139,[0,1,2,3,4,9...|
+|     1500.0|     1500.0|                NULL|    NULL|                 0.0|         Unknown|          Internship|                    0.0|(138,[0,1,2,4,19]...|(139,[0,1,2,5,20]...|
+|      125.0|      125.0|                NULL|    NULL|                 4.0|          Remote| Full Time, Contract|                   16.0|(138,[0,1,2,3,5,1...|(139,[0,1,2,3,4,6...|
++-----------+-----------+--------------------+--------+--------------------+----------------+--------------------+-----------------------+--------------------+--------------------+
+only showing top 5 rows</code></pre>
+</div>
+</div>
+<section id="linear-regression" class="level3">
+<h3 class="anchored" data-anchor-id="linear-regression">Linear Regression</h3>
+<div id="7425d1b7" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.regression <span class="im">import</span> LinearRegression</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.ml.evaluation <span class="im">import</span> RegressionEvaluator</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql.functions <span class="im">import</span> udf, col</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql.types <span class="im">import</span> BooleanType</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="at">@udf</span>(BooleanType())</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> has_nan_or_inf(v):</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> v <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">any</span>(math.isnan(x) <span class="kw">or</span> math.isinf(x) <span class="cf">for</span> x <span class="kw">in</span> v.toArray())</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>train_df <span class="op">=</span> train_df.<span class="bu">filter</span>(<span class="op">~</span>has_nan_or_inf(col(<span class="st">"features"</span>)))</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>test_df  <span class="op">=</span> test_df.<span class="bu">filter</span>(<span class="op">~</span>has_nan_or_inf(col(<span class="st">"features"</span>)))</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Train rows after NaN filter : </span><span class="sc">{</span>train_df<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Test  rows after NaN filter : </span><span class="sc">{</span>test_df<span class="sc">.</span>count()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Train ─────────────────────────────────────────────────────────────────────</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> LinearRegression(</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>    featuresCol<span class="op">=</span><span class="st">"features"</span>,</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    labelCol<span class="op">=</span>target_col,</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>    maxIter<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>    solver<span class="op">=</span><span class="st">"normal"</span>,</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>    regParam<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    elasticNetParam<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>    standardization<span class="op">=</span><span class="va">False</span></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>lr_model <span class="op">=</span> lr.fit(train_df)</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Evaluate on test set ──────────────────────────────────────────────────────</span></span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> lr_model.transform(test_df)</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>r2   <span class="op">=</span> RegressionEvaluator(labelCol<span class="op">=</span>target_col, predictionCol<span class="op">=</span><span class="st">"prediction"</span>, metricName<span class="op">=</span><span class="st">"r2"</span>).evaluate(predictions)</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>rmse <span class="op">=</span> RegressionEvaluator(labelCol<span class="op">=</span>target_col, predictionCol<span class="op">=</span><span class="st">"prediction"</span>, metricName<span class="op">=</span><span class="st">"rmse"</span>).evaluate(predictions)</span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>mae  <span class="op">=</span> RegressionEvaluator(labelCol<span class="op">=</span>target_col, predictionCol<span class="op">=</span><span class="st">"prediction"</span>, metricName<span class="op">=</span><span class="st">"mae"</span>).evaluate(predictions)</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Intercept : </span><span class="sc">{</span>lr_model<span class="sc">.</span>intercept<span class="sc">:,.4f}</span><span class="ss">"</span>)</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"R²        : </span><span class="sc">{</span>r2<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"RMSE      : </span><span class="sc">{</span>rmse<span class="sc">:,.2f}</span><span class="ss">"</span>)</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"MAE       : </span><span class="sc">{</span>mae<span class="sc">:,.2f}</span><span class="ss">"</span>)</span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Coefficients, SE, t-values, p-values ─────────────────────────────────────</span></span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> lr_model.summary</span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>coefs   <span class="op">=</span> np.array(lr_model.coefficients.toArray())</span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>n_feats <span class="op">=</span> <span class="bu">len</span>(coefs)</span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Exact SE — only works when X'X is invertible</span></span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a>    se    <span class="op">=</span> np.array(summary.coefficientStandardErrors[:<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a>    tvals <span class="op">=</span> np.array(summary.tValues[:<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a>    pvals <span class="op">=</span> np.array(summary.pValues[:<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>    se_method <span class="op">=</span> <span class="st">"exact"</span></span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Fallback: approximate SE from residuals (near-multicollinearity in OHE features)</span></span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a>    train_pred <span class="op">=</span> lr_model.transform(train_df)</span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a>    n   <span class="op">=</span> train_pred.count()</span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a>    rss <span class="op">=</span> train_pred.selectExpr(<span class="ss">f"sum(pow(</span><span class="sc">{</span>target_col<span class="sc">}</span><span class="ss"> - prediction, 2)) as rss"</span>).collect()[<span class="dv">0</span>][<span class="st">"rss"</span>]</span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>    mse <span class="op">=</span> rss <span class="op">/</span> (n <span class="op">-</span> n_feats <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a>    se    <span class="op">=</span> np.full(n_feats, np.sqrt(mse <span class="op">/</span> n))</span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a>    tvals <span class="op">=</span> coefs <span class="op">/</span> se</span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a>    pvals <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> stats.t.cdf(np.<span class="bu">abs</span>(tvals), df<span class="op">=</span>n <span class="op">-</span> n_feats <span class="op">-</span> <span class="dv">1</span>))</span>
+<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a>    se_method <span class="op">=</span> <span class="st">"approximated (X'X near-singular due to OHE multicollinearity)"</span></span>
+<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Diagnostic check ──────────────────────────────────────────────────────────</span></span>
+<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">---This is Diagnostic check, No need to print it in the final doc---"</span>)</span>
+<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"---The numbers below should all be same---"</span>)</span>
+<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"SE method:          </span><span class="sc">{</span>se_method<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Length of features: </span><span class="sc">{</span>n_feats<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Length of coefs:    </span><span class="sc">{</span><span class="bu">len</span>(coefs)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Length of se:       </span><span class="sc">{</span><span class="bu">len</span>(se)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Length of tvals:    </span><span class="sc">{</span><span class="bu">len</span>(tvals)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Length of pvals:    </span><span class="sc">{</span><span class="bu">len</span>(pvals)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Build feature names ───────────────────────────────────────────────────────</span></span>
+<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a>n_ohe <span class="op">=</span> n_feats <span class="op">-</span> <span class="bu">len</span>(continuous_cols)</span>
+<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a>feature_names <span class="op">=</span> <span class="bu">list</span>(continuous_cols) <span class="op">+</span> [<span class="ss">f"ohe_feature_</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_ohe)]</span>
+<span id="cb19-81"><a href="#cb19-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-82"><a href="#cb19-82" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Coefficient summary DataFrame ─────────────────────────────────────────────</span></span>
+<span id="cb19-83"><a href="#cb19-83" aria-hidden="true" tabindex="-1"></a>ci_lower <span class="op">=</span> coefs <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> se</span>
+<span id="cb19-84"><a href="#cb19-84" aria-hidden="true" tabindex="-1"></a>ci_upper <span class="op">=</span> coefs <span class="op">+</span> <span class="fl">1.96</span> <span class="op">*</span> se</span>
+<span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-86"><a href="#cb19-86" aria-hidden="true" tabindex="-1"></a>coef_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb19-87"><a href="#cb19-87" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Feature"</span>     : feature_names,</span>
+<span id="cb19-88"><a href="#cb19-88" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Coefficient"</span> : coefs.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb19-89"><a href="#cb19-89" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Std Error"</span>   : se.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb19-90"><a href="#cb19-90" aria-hidden="true" tabindex="-1"></a>    <span class="st">"t-value"</span>     : tvals.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb19-91"><a href="#cb19-91" aria-hidden="true" tabindex="-1"></a>    <span class="st">"p-value"</span>     : pvals.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb19-92"><a href="#cb19-92" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CI Lower"</span>    : ci_lower.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb19-93"><a href="#cb19-93" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CI Upper"</span>    : ci_upper.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb19-94"><a href="#cb19-94" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Significant"</span> : [<span class="st">"Yes"</span> <span class="cf">if</span> p <span class="op">&lt;</span> <span class="fl">0.05</span> <span class="cf">else</span> <span class="st">"No"</span> <span class="cf">for</span> p <span class="kw">in</span> pvals],</span>
+<span id="cb19-95"><a href="#cb19-95" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb19-96"><a href="#cb19-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-97"><a href="#cb19-97" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Top 15 features by absolute coefficient:"</span>)</span>
+<span id="cb19-98"><a href="#cb19-98" aria-hidden="true" tabindex="-1"></a>top15 <span class="op">=</span> coef_df.reindex(coef_df[<span class="st">"Coefficient"</span>].<span class="bu">abs</span>().sort_values(ascending<span class="op">=</span><span class="va">False</span>).index).head(<span class="dv">15</span>)</span>
+<span id="cb19-99"><a href="#cb19-99" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(top15.to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb19-100"><a href="#cb19-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-101"><a href="#cb19-101" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Interpretation ────────────────────────────────────────────────────────────</span></span>
+<span id="cb19-102"><a href="#cb19-102" aria-hidden="true" tabindex="-1"></a>sig_count <span class="op">=</span> (coef_df[<span class="st">"Significant"</span>] <span class="op">==</span> <span class="st">"Yes"</span>).<span class="bu">sum</span>()</span>
+<span id="cb19-103"><a href="#cb19-103" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Model Performance:"</span>)</span>
+<span id="cb19-104"><a href="#cb19-104" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  R² = </span><span class="sc">{</span>r2<span class="sc">:.4f}</span><span class="ss">  → model explains </span><span class="sc">{</span>r2<span class="op">*</span><span class="dv">100</span><span class="sc">:.1f}</span><span class="ss">% of variance in salary"</span>)</span>
+<span id="cb19-105"><a href="#cb19-105" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  RMSE = </span><span class="sc">{</span>rmse<span class="sc">:,.2f}</span><span class="ss">  → average prediction error in salary units"</span>)</span>
+<span id="cb19-106"><a href="#cb19-106" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  MAE  = </span><span class="sc">{</span>mae<span class="sc">:,.2f}</span><span class="ss">  → median absolute prediction error"</span>)</span>
+<span id="cb19-107"><a href="#cb19-107" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span>sig_count<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span>n_feats<span class="sc">}</span><span class="ss"> features are statistically significant (p &lt; 0.05)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/ubuntu/.venv/lib/python3.12/site-packages/pyspark/sql/udf.py:116: FutureWarning: PySpark does not yet fully support pandas &gt;= 3.0.0. Some features may not work correctly. It is recommended to use pandas &lt; 3.0.0 for now.
+  require_minimum_pandas_version()
+
+[Stage 97:&gt;                                                        (0 + 2) / 16]
+
+[Stage 97:=======&gt;                                                 (2 + 2) / 16]
+
+[Stage 97:==============&gt;                                          (4 + 2) / 16]
+
+[Stage 97:=====================&gt;                                   (6 + 2) / 16]
+
+[Stage 97:========================&gt;                                (7 + 2) / 16]
+
+[Stage 97:============================&gt;                            (8 + 2) / 16]
+
+[Stage 97:================================&gt;                        (9 + 2) / 16]
+
+[Stage 97:===================================&gt;                    (10 + 2) / 16]
+
+[Stage 97:==========================================&gt;             (12 + 2) / 16]
+
+[Stage 97:=============================================&gt;          (13 + 2) / 16]
+
+[Stage 97:=================================================&gt;      (14 + 2) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Train rows after NaN filter : 2,743</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 100:&gt;                                                       (0 + 2) / 16]
+
+[Stage 100:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 100:=======&gt;                                                (2 + 2) / 16]
+
+[Stage 100:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 100:=================&gt;                                      (5 + 2) / 16]
+
+[Stage 100:=====================&gt;                                  (6 + 2) / 16]
+
+[Stage 100:========================&gt;                               (7 + 2) / 16]
+
+[Stage 100:============================&gt;                           (8 + 2) / 16]
+
+[Stage 100:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 100:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 100:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 100:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 100:============================================&gt;          (13 + 2) / 16]
+
+[Stage 100:================================================&gt;      (14 + 2) / 16]
+
+[Stage 100:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Test  rows after NaN filter : 633</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>26/10/06 17:42:16 WARN Instrumentation: [8baa0511] regParam is zero, which might cause numerical instability and overfitting.
+
+[Stage 103:&gt;                                                       (0 + 2) / 16]
+
+[Stage 103:&gt;                                                       (0 + 3) / 16]
+
+[Stage 103:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 103:=======&gt;                                                (2 + 2) / 16]
+
+[Stage 103:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 103:==============&gt;                                         (4 + 2) / 16]
+
+[Stage 103:=================&gt;                                      (5 + 2) / 16]
+
+[Stage 103:=====================&gt;                                  (6 + 2) / 16]
+
+[Stage 103:========================&gt;                               (7 + 2) / 16]
+
+[Stage 103:============================&gt;                           (8 + 2) / 16]
+
+[Stage 103:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 103:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 103:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 103:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 103:============================================&gt;          (13 + 2) / 16]
+
+[Stage 103:================================================&gt;      (14 + 2) / 16]
+
+[Stage 103:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                
+26/10/06 17:42:23 WARN Instrumentation: [8baa0511] Cholesky solver failed due to singular covariance matrix. Retrying with Quasi-Newton solver.
+
+[Stage 106:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 106:=======&gt;                                                (2 + 2) / 16]
+
+[Stage 106:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 106:==============&gt;                                         (4 + 2) / 16]
+
+[Stage 106:=================&gt;                                      (5 + 2) / 16]
+
+[Stage 106:=====================&gt;                                  (6 + 2) / 16]
+
+[Stage 106:========================&gt;                               (7 + 2) / 16]
+
+[Stage 106:============================&gt;                           (8 + 2) / 16]
+
+[Stage 106:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 106:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 106:============================================&gt;          (13 + 2) / 16]
+
+[Stage 106:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                
+
+[Stage 109:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 109:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 109:=================&gt;                                      (5 + 2) / 16]
+
+[Stage 109:========================&gt;                               (7 + 2) / 16]
+
+[Stage 109:============================&gt;                           (8 + 2) / 16]
+
+[Stage 109:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 109:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 109:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 109:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 109:================================================&gt;      (14 + 2) / 16]
+
+                                                                                
+
+[Stage 112:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 112:=======&gt;                                                (2 + 2) / 16]
+
+[Stage 112:==============&gt;                                         (4 + 2) / 16]
+
+[Stage 112:=================&gt;                                      (5 + 2) / 16]
+
+[Stage 112:=====================&gt;                                  (6 + 2) / 16]
+
+[Stage 112:============================&gt;                           (8 + 2) / 16]
+
+[Stage 112:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 112:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 112:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 112:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 112:============================================&gt;          (13 + 2) / 16]
+
+[Stage 112:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                
+
+[Stage 115:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 115:=======&gt;                                                (2 + 2) / 16]
+
+[Stage 115:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 115:==============&gt;                                         (4 + 2) / 16]
+
+[Stage 115:=================&gt;                                      (5 + 3) / 16]
+
+[Stage 115:========================&gt;                               (7 + 2) / 16]
+
+[Stage 115:============================&gt;                           (8 + 2) / 16]
+
+[Stage 115:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 115:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 115:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 115:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 115:================================================&gt;      (14 + 2) / 16]
+
+[Stage 115:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Intercept : 1.5188
+R²        : 1.0000
+RMSE      : 0.58
+MAE       : 0.35</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+[Stage 118:&gt;                                                       (0 + 2) / 16]
+
+[Stage 118:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 118:=======&gt;                                                (2 + 2) / 16]
+
+[Stage 118:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 118:=================&gt;                                      (5 + 2) / 16]
+
+[Stage 118:=====================&gt;                                  (6 + 2) / 16]
+
+[Stage 118:========================&gt;                               (7 + 2) / 16]
+
+[Stage 118:============================&gt;                           (8 + 2) / 16]
+
+[Stage 118:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 118:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 118:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 118:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 118:================================================&gt;      (14 + 2) / 16]
+
+[Stage 118:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                
+
+[Stage 121:===&gt;                                                    (1 + 2) / 16]
+
+[Stage 121:==========&gt;                                             (3 + 2) / 16]
+
+[Stage 121:==============&gt;                                         (4 + 2) / 16]
+
+[Stage 121:=====================&gt;                                  (6 + 2) / 16]
+
+[Stage 121:========================&gt;                               (7 + 2) / 16]
+
+[Stage 121:============================&gt;                           (8 + 2) / 16]
+
+[Stage 121:============================&gt;                           (8 + 3) / 16]
+
+[Stage 121:===============================&gt;                        (9 + 2) / 16]
+
+[Stage 121:==================================&gt;                    (10 + 2) / 16]
+
+[Stage 121:=====================================&gt;                 (11 + 2) / 16]
+
+[Stage 121:=========================================&gt;             (12 + 2) / 16]
+
+[Stage 121:================================================&gt;      (14 + 2) / 16]
+
+[Stage 121:===================================================&gt;   (15 + 1) / 16]
+
+                                                                                </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+---This is Diagnostic check, No need to print it in the final doc---
+---The numbers below should all be same---
+SE method:          approximated (X'X near-singular due to OHE multicollinearity)
+Length of features: 138
+Length of coefs:    138
+Length of se:       138
+Length of tvals:    138
+Length of pvals:    138
+
+Top 15 features by absolute coefficient:
+       Feature  Coefficient  Std Error   t-value  p-value  CI Lower  CI Upper Significant
+ohe_feature_77      -4.4757     0.0099 -453.4129      0.0   -4.4951   -4.4564         Yes
+ohe_feature_13      -4.2893     0.0099 -434.5318      0.0   -4.3087   -4.2700         Yes
+ohe_feature_59      -4.1572     0.0099 -421.1480      0.0   -4.1766   -4.1379         Yes
+ohe_feature_81      -4.1396     0.0099 -419.3600      0.0   -4.1589   -4.1202         Yes
+ohe_feature_73      -4.1372     0.0099 -419.1145      0.0   -4.1565   -4.1178         Yes
+ohe_feature_28      -4.1313     0.0099 -418.5175      0.0   -4.1506   -4.1119         Yes
+ohe_feature_19      -4.0006     0.0099 -405.2818      0.0   -4.0200   -3.9813         Yes
+ohe_feature_31      -3.9888     0.0099 -404.0864      0.0   -4.0082   -3.9695         Yes
+ohe_feature_24      -3.9869     0.0099 -403.8913      0.0   -4.0062   -3.9675         Yes
+ohe_feature_22      -3.9816     0.0099 -403.3547      0.0   -4.0009   -3.9622         Yes
+ ohe_feature_6      -3.9768     0.0099 -402.8711      0.0   -3.9962   -3.9575         Yes
+ ohe_feature_8      -3.9568     0.0099 -400.8422      0.0   -3.9761   -3.9374         Yes
+ohe_feature_43      -3.9057     0.0099 -395.6703      0.0   -3.9251   -3.8864         Yes
+ohe_feature_26      -3.8518     0.0099 -390.2115      0.0   -3.8712   -3.8325         Yes
+ ohe_feature_5      -3.8261     0.0099 -387.6002      0.0   -3.8454   -3.8067         Yes
+
+Model Performance:
+  R² = 1.0000  → model explains 100.0% of variance in salary
+  RMSE = 0.58  → average prediction error in salary units
+  MAE  = 0.35  → median absolute prediction error
+
+62 of 138 features are statistically significant (p &lt; 0.05)</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
