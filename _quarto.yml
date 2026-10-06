@@ -10,7 +10,7 @@ website:
   navbar:
     left:
       - href: index.qmd
-        text: About
+        text: Bio
 #      - href: assignment1.qmd
 #        text: Assignment 1
 #      - href: assignment2.qmd

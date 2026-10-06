@@ -1,36 +1,31 @@
 ---
-title: "Senthil Sukumar"
-format: html
+title: ""
+format:
+  html:
+    title-block-style: none
+    link-external-newwindow: true
 jupyter: python3
 execute:
   freeze: true 
 ---
 
- ### Senthil Sukumar
- ![](./images/profile.jpg){fig-align="center" width="75%"}
 
-:::{.sub}
-### Business Intelligence and Analytics Professional
-:::
 
-:::{.hero-links}
-[LinkedIn](https://www.linkedin.com/in/senthilca/) · [GitHub](senthilsukumar-bu.github.io) · [Email](mailto:senthilsukumar.87@email.com)
+### Intro
+<img src="./images/profile.jpg"
+     style="width:160px; height:160px; border-radius:50%; object-fit:cover; display:block; margin:0 0 1.5rem;">
+<p style="margin:0; font-weight:700;">Senthil Sukumar</p>
+<p style="margin:0;">Business Intelligence and Analytics Professional</p>
+
+[LinkedIn](https://www.linkedin.com/in/senthilca/) · [GitHub](https://github.com/senthilsukumar-bu)
 
 ---
 
-
-:::{.section}
-:::{.container-narrow}
-
-:::{.section-title}
-### About Me
-:::
-:::{.section-divider}
-:::
+### About 
 
 Thanks for stopping by. 
 
-My name is Senthil.
+My name is Senthil (SEN-thil).
 
 I was born and raised in Singapore, and call California my home. I currently live in Seoul together with my wife and daughter for work.
 
@@ -47,32 +42,115 @@ I'm a seasoned Business Intelligence and Analytics leader with over a decade of 
 
 ---
 
-### Interests
+### Projects
+::: {.container .py-5}
 
-:::{.interest-grid}
+::: {.card .border-0 .shadow-sm .mb-4}
 
-:::{.interest-tile}
-#### 📊 Data Engineering
-Designing robust pipelines with PySpark, dbt, and AWS to power reliable analytics at scale.
+::: {.card-body .p-0}
+<div style="position:relative; overflow:hidden; border-radius:8px; padding-top:56.25%;">
+  <iframe
+    src="https://docs.google.com/presentation/d/e/2PACX-1vT2K8A1iQ0kbmeGZO9JUOnlQQy_1HF_tZ-9vZhxfhXVGLtEyWpEX3JJwb8-ENTpnQ/embed?start=false&loop=false&delayms=60000&slide=id.h451e1aefa9dedbfb_0_2"
+    style="position:absolute; top:0; left:0; width:100%; height:calc(100% + 44px);
+           border:none;"
+    allowfullscreen>
+  </iframe>
+</div>
 :::
 
-:::{.interest-tile}
-#### 🤖 Machine Learning
-Applying predictive models to labour market and consumer behaviour data.
+::: {.card-body .pt-2 .px-4 .pb-4}
+### Shipping Data Automation (prepared for SpaceX)
+<p class="text-muted small mb-2">SpaceX · California, USA · 2024</p>
+
+I prepared a presentation on an E2E (end-to-end) shipping data automation project I led at Wing that decreased the time it took to make replenishment decisions from an average of 2 weeks to 30 minutes (-99.9%) for SpaceX as part of a job interview. I was offered the role, but decided to join Coupang instead (my current company).
+
+[Link](https://docs.google.com/presentation/d/e/2PACX-1vT2K8A1iQ0kbmeGZO9JUOnlQQy_1HF_tZ-9vZhxfhXVGLtEyWpEX3JJwb8-ENTpnQ/embed?start=false&loop=false&delayms=60000&slide=id.h451e1aefa9dedbfb_0_2")
+
+<span class="badge bg-primary me-1">SQL</span>
+<span class="badge bg-primary me-1">Data Studio</span>
+<span class="badge bg-primary me-1">SAP</span>
+:::
 :::
 
-:::{.interest-tile}
-#### 📈 Business Intelligence
-Building KPI frameworks and self-service dashboards for non-technical stakeholders.
+
+::: {.card .border-0 .shadow-sm .mb-4}
+
+::: {.card-body .p-0}
+<div style="position:relative; overflow:hidden; border-radius:8px; padding-top:56.25%;">
+  <iframe
+    src="https://docs.google.com/presentation/d/e/2PACX-1vSJwixoCM66nP2DGxQ-1u1DMGCujCKjnHB9WXQnhirEK5mZfQp_pU5_V_bNlmou9kIP3a92B7ypn8UQ/embed?start=false&loop=false&delayms=60000"
+    style="position:absolute; top:0; left:0; width:100%; height:calc(100% + 44px);
+           border:none;"
+    allowfullscreen>
+  </iframe>
+</div>
+:::
+
+::: {.card-body .pt-2 .px-4 .pb-4}
+### moniquejrose.com
+<p class="text-muted small mb-2">Personal · California, USA · 2023</p>
+
+A website I developed to promote my wife's work as an artist.
+
+[Link](https://moniquejrose.com/)
+
+<span class="badge bg-primary me-1">HTML</span>
+<span class="badge bg-primary me-1">GoDaddy</span>
+:::
+:::
+
+
+::: {.card .border-0 .shadow-sm .mb-4}
+
+::: {.card-body .p-0}
+<div style="position:relative; overflow:hidden; border-radius:8px; padding-top:56.25%;">
+  <iframe
+    src="https://docs.google.com/presentation/d/e/2PACX-1vTVI59Lb6-KxGhqcaS5NyTYdxU15CJix9VCCbvUYht-bU5em383uRprYAgo-LjZ0OyFARZ1djNoSRFS/embed?start=false&loop=false&delayms=3000"
+    style="position:absolute; top:0; left:0; width:100%; height:calc(100% + 44px);
+           border:none;"
+    allowfullscreen>
+  </iframe>
+</div>
+:::
+
+::: {.card-body .pt-2 .px-4 .pb-4}
+### SQL 101 Bootcamp
+<p class="text-muted small mb-2">Google · Singapore · 2019</p>
+
+My career began with SQL, from when I first dabbled in it in college, to when I started teaching it to professionals on weekends for quick money after I graduated, and all through my working years. It's become part of my analytical toolkit and one of the few ways I enter my "flow state". When I joined Google in 2017, within a few months I was continuing to spread the gospel of SQL and holding business analysis bootcamps for Strategy/Account Managers and Analysts. This is the public version of my General Assembly bootcamp slides and exercises.
+
+[Link](https://docs.google.com/presentation/d/e/2PACX-1vTVI59Lb6-KxGhqcaS5NyTYdxU15CJix9VCCbvUYht-bU5em383uRprYAgo-LjZ0OyFARZ1djNoSRFS/embed?start=false&loop=false&delayms=3000)
+
+<span class="badge bg-primary me-1">SQL</span>
+:::
 :::
 
 :::
 
 ---
 
-### Career Goals
+### Contact
 
-I am seeking roles at the intersection of data engineering and business intelligence — where I can apply modern cloud tooling to help organisations become genuinely data-driven. I am particularly interested in technology, financial services, and healthcare sectors.
+```{=html}
+<form action="https://formspree.io/f/moejjqlk" method="POST" style="max-width:560px;">
 
-:::
-:::
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Name</label>
+    <input type="text" name="name" class="form-control" placeholder="Your name" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Email</label>
+    <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label fw-semibold">Message</label>
+    <textarea name="message" class="form-control" rows="5"
+              placeholder="Your message..." required></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary px-4">Get in Touch</button>
+
+</form>
+```
