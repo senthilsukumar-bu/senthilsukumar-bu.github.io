@@ -42,4 +42,54 @@ print("---This is Diagnostic check, No need to print it in the final doc---")
 
 df.printSchema() # comment this line when rendering the submission
 df.show(5)
+
+```
+
+```{python}
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F   # ← add this line
+
+# Feature selection 
+continuous_cols = [
+    "SALARY_FROM",
+    "MAX_YEARS_EXPERIENCE",
+    "DURATION",
+    "MIN_YEARS_EXPERIENCE",
+]
+categorical_cols = [
+    "REMOTE_TYPE_NAME",      # Remote / On-site / Hybrid
+    "EMPLOYMENT_TYPE_NAME",  # Full-time / Part-time / Contract
+]
+target_col = "SALARY"
+key_cols = [target_col] + continuous_cols + categorical_cols
+
+# Drop nulls 
+df_clean = df.dropna(subset=key_cols)
+
+# Replace empty strings in categorical columns
+for c in categorical_cols:
+    df_clean = df_clean.withColumn(
+        c, F.when(F.trim(F.col(c)) == "", None).otherwise(F.col(c))
+    )
+
+# Cast continuous columns + target to double
+for c in continuous_cols + [target_col]:
+    df_clean = df_clean.withColumn(c, F.expr(f"try_cast(`{c}` as double)"))
+
+
+# Drop rows that became null after casting
+df_clean = df_clean.dropna(subset=key_cols)
+
+df_clean.groupBy("EDUCATION_LEVELS_NAME").count().show()
+df_clean.groupBy("EMPLOYMENT_TYPE_NAME").count().show()
+df_clean.groupBy("REMOTE_TYPE_NAME").count().show()
+
+print(f"Rows before cleaning : {df.count():,}")
+print(f"Rows after  cleaning : {df_clean.count():,}")
+
+df_clean.groupBy("EDUCATION_LEVELS_NAME").count().show()
+df_clean.groupBy("EMPLOYMENT_TYPE_NAME").count().show()
+df_clean.groupBy("REMOTE_TYPE_NAME").count().show()
 ```
