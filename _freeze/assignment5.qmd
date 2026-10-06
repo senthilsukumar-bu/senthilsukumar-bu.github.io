@@ -1,0 +1,42 @@
+
+---
+title: "Assignment 5"
+format: html
+jupyter: python3
+execute:
+  freeze: true
+---
+
+## Assignment 2 - Load data into Spark, Create Tables and Queries
+```{python}
+from pyspark.sql import SparkSession
+import pandas as pd
+import plotly.express as px
+import plotly.io as pio
+import numpy as np
+
+np.random.seed(42)
+
+pio.renderers.default = "notebook+notebook_connected+vscode"
+
+# Initialize Spark Session
+spark = SparkSession.builder.appName("CareerCompassData").getOrCreate()
+
+# Load Data (all 17 Parquet partition files)
+from pathlib import Path
+data_dir = Path(..\Jobs\_2026\").resolve()  # Use ../Jobs_2026 if you downloaded the dataset folder beside your repository. Change the path if you saved it elsewhere.
+df = spark.read.parquet(*[path.as_uri() for path in sorted(data_dir.glob("*.parquet"))])
+model_source_cols = [
+    "SALARY_TO", "SALARY_FROM", "SALARY",
+    "MIN_YEARS_EXPERIENCE", "MAX_YEARS_EXPERIENCE", "DURATION",
+    "EDUCATION_LEVELS_NAME", "EMPLOYMENT_TYPE_NAME", "REMOTE_TYPE_NAME",
+    "IS_INTERNSHIP", "COMPANY_IS_STAFFING"
+]
+df = df.select(*model_source_cols)
+
+# Show Schema and Sample Data
+print("---This is Diagnostic check, No need to print it in the final doc---")
+
+df.printSchema() # comment this line when rendering the submission
+df.show(5)
+```
